@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.51.0/dist/phaser.js"></script>
+    <script src="/js/backend_client.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="css/main.css">
+    <title>Backend Portal</title>
+</head>
+<body>
+</body>
+  <div class="container">
+  <form id="login" action="javascript:init_connection(password.value)">
+    Password: <input type="text" id="password" name="password"><br>
+    <input type="submit" value="Login">
+  </form>
+  <button onclick="start_game()">Start Games</button>
+  <button onclick="reset()">Reset Games</button>
+  <button onclick="purge()">Purge Games</button>
+  </div>
+</html>
