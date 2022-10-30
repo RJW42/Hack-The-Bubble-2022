@@ -395,12 +395,54 @@ class MainScene extends Phaser.Scene {
     server.curr_number_of_asteroids++;
 
     const asteroid_id = server.last_asteroid_id++;
+    
+    const margin = 100;
+    const SIDE_SPEED = 5;
+    const FORWARD_SPEED = 10;
+    let udlr =  randomInt(0, 4);
+    
+
+    let x = 0;
+    let y = 0;
+    let velx = 0;
+    let vely = 0;
+    switch (udlr) {
+      // up
+      case 0:
+        x = randomInt(0, config.width);
+        y = randomInt(0, margin);
+        velx = randomInt(-SIDE_SPEED, SIDE_SPEED);
+        vely = randomInt(0,FORWARD_SPEED);
+        break;
+      // down
+      case 1:
+        x = randomInt(0, config.width);
+        y = randomInt(config.height - margin, config.height);
+        velx = randomInt(-SIDE_SPEED, SIDE_SPEED);
+        vely = randomInt(-FORWARD_SPEED,0);
+        break;
+      // left
+      case 2:
+        x = randomInt(0, margin);
+        y = randomInt(0, config.height);
+        velx = randomInt(0, FORWARD_SPEED);
+        vely = randomInt(0,SIDE_SPEED);
+        break;
+      // right
+      case 3:
+        x = randomInt(config.width - margin, config.width);
+        y = randomInt(0, config.height);
+        velx = randomInt(-FORWARD_SPEED, 0);
+        vely = randomInt(-SIDE_SPEED,SIDE_SPEED);
+        break;
+      
+    }
 
     state.asteroids[asteroid_id] = {
-      x: randomInt(0, 1400),
-      y: randomInt(0, 800),
-      velx: randomInt(-10, 10),
-      vely: randomInt(-10, 10),
+      x: x,
+      y: y,
+      velx: velx,
+      vely: vely,
       body: null,
       asteroid_id: asteroid_id,
     };
