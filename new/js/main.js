@@ -60,23 +60,22 @@ scene.preload = () => {
     left: scene.input.keyboard.addKey('A'),
     right: scene.input.keyboard.addKey('D'),
     space: scene.input.keyboard.addKey('space'),
+    p: scene.input.keyboard.addKey('P'),
   }
-
-  // Init text
-  scene.score_text = scene.add.text(0, 0, 'Waiting For Players', {
-    fontSize: 60,
-    color: 'black',
-  });
-  scene.goal_text = scene.add.text(0, 60, '', {
-    fontSize: 60,
-    color: 'black',
-  });
 }
 
 scene.create = () => {
     console.log('Start');
     scene.add.image(400, 0, 'background');
     Client.connect(username);
+    scene.score_text = scene.add.text(0, 0, 'Waiting For Players', {
+      fontSize: 60,
+      color: 'white',
+    });
+    scene.goal_text = scene.add.text(0, 60, '', {
+      fontSize: 60,
+      color: 'white',
+    });
 }
 
 scene.update = () => {
@@ -137,6 +136,7 @@ scene.update = () => {
     left: scene.keys.left.isDown,
     right: scene.keys.right.isDown,
     space: scene.keys.space.isDown,
+    p: scene.keys.p.isDown,
   }
   Client.socket.emit('movement', keys);
 }
@@ -145,7 +145,8 @@ scene.update = () => {
 scene.draw_text = () => {
   switch(scene.state.game_state){
   case PLAYING:
-    scene.score_text.setText('Score: Nonce');
+    for(const [player_id, player] of Object.entries(scene.state.players))
+      scene.score_text.setText('SpaceCoins: ' + player.coins.toString());
     break;
   }
 }
@@ -202,7 +203,8 @@ const update_players = (new_state, server_state) => {
       obj: obj,
       angle: server_state.players[player_id].angle,
       username: server_state.players[player_id].username,
-      color: server_state.players[player_id].color
+      color: server_state.players[player_id].color,
+      coins: server_state.players[player_id].coins
     };
   }
 

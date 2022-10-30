@@ -100,14 +100,22 @@ func main() {
 	r := gin.Default()
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H {
-			"hash": blockchain.add_block(c.ClientIP(), 0, 4),
+			"hash": blockchain.add_block(c.ClientIP(), 0, 5),
 			"coins": blockchain.coin_count(c.ClientIP()),
 		})
 	})
-	r.GET("/:amount", func(c *gin.Context) {
-		amount, _ := strconv.Atoi(c.Param("amount"))
+	r.GET("/:difficulty", func(c *gin.Context) {
+		difficulty, _ := strconv.Atoi(c.Param("difficulty"))
 		c.JSON(http.StatusOK, gin.H {
-			"hash": blockchain.add_block(c.ClientIP(), amount, 4),
+			"hash": blockchain.add_block(c.ClientIP(), 0, difficulty),
+			"coins": blockchain.coin_count(c.ClientIP()),
+		})
+	})
+	r.GET("/:difficulty/:amount", func(c *gin.Context) {
+		amount, _ := strconv.Atoi(c.Param("amount"))
+		difficulty, _ := strconv.Atoi(c.Param("difficulty"))
+		c.JSON(http.StatusOK, gin.H {
+			"hash": blockchain.add_block(c.ClientIP(), amount, difficulty),
 			"coins": blockchain.coin_count(c.ClientIP()),
 		})
 	})

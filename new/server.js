@@ -111,6 +111,7 @@ const handle_player_connect = (data, socket) => {
     green: randomInt(0, 255),
     blue: randomInt(0, 255),
     coins: 0,
+    difficulty: 5,
     color: Math.floor(Math.random()*16777215)
   };
 
@@ -164,8 +165,37 @@ const handle_player_movement = (keys, socket) => {
 // player.vely = augment;
   }
 
-  if(!keys.space && !player.can_fire)
-    player.can_fire = true;
+  // if(!keys.space && !player.can_fire)
+  //   player.can_fire = true;
+
+
+  // spend coins!
+  if(keys.p) {
+    console.log(player.difficulty)
+    if (player.difficulty <= 2 || player.coins < 10) return;
+    player.difficulty--;
+    player.can_fire = false;
+    (async () => {
+      const response = await https.get('http://pc8-026-l:8080/' + player.difficulty + '/' + 10, (resp) => {
+        let data = '';
+      
+        // A chunk of data has been received.
+        resp.on('data', (chunk) => {
+          data += chunk;
+        });
+      
+        // The whole response has been received. Print out the result.
+        resp.on('end', () => {
+          console.log(JSON.parse(data));
+          player.coins = JSON.parse(data).coins
+          player.can_fire = true
+        });
+      
+      }).on("error", (err) => {
+        console.log("Error: " + err.message);
+      });
+    })();
+  }
 
   if(keys.space && player.body != null && player.can_fire) {
     player.can_fire = false;
@@ -196,7 +226,7 @@ const handle_player_movement = (keys, socket) => {
     };
 
     (async () => {
-      const response = await https.get('http://pc8-026-l:8080', (resp) => {
+      const response = await https.get('http://pc8-026-l:8080/' + player.difficulty, (resp) => {
         let data = '';
       
         // A chunk of data has been received.
@@ -206,7 +236,9 @@ const handle_player_movement = (keys, socket) => {
       
         // The whole response has been received. Print out the result.
         resp.on('end', () => {
-          // console.log(JSON.parse(data));
+          console.log(JSON.parse(data));
+          player.coins = JSON.parse(data).coins
+          player.can_fire = true
         });
       
       }).on("error", (err) => {
