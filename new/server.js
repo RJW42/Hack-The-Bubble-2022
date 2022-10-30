@@ -98,7 +98,10 @@ const handle_player_connect = (data, socket) => {
     vely: 0,
     body: null,
     username: data.username,
-    can_fire: true
+    can_fire: true,
+    red: randomInt(0, 255),
+    green: randomInt(0, 255),
+    blue: randomInt(0, 255)
   };
 
   state.players[socket.id] = socket.player;

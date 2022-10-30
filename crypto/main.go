@@ -22,7 +22,6 @@ type Block struct {
 type Blockchain struct {
 	origin Block
 	chain []Block
-	difficulty int
 }
 
 func (b Block) calc_hash() string {
@@ -36,11 +35,11 @@ func (b *Block) mine(difficulty int) {
 	for !strings.HasPrefix(b.hash, strings.Repeat("0", difficulty)) {
 		b.pow++
 		b.hash = b.calc_hash()
-		fmt.Println(b.hash)
+		// fmt.Println(b.hash)
 	}
 }
 
-func create_blockchain(difficulty int) Blockchain {
+func create_blockchain() Blockchain {
 	origin := Block {
 		hash: "0",
 		timestamp: time.Now(),
@@ -48,11 +47,10 @@ func create_blockchain(difficulty int) Blockchain {
 	return Blockchain {
 		origin,
 		[]Block{origin},
-		difficulty,
 	}
 }
 
-func (b *Blockchain) add_block(ip string) string {
+func (b *Blockchain) add_block(ip string, difficulty int) string {
 	block_data := map[string]interface{}{
 		"ip": ip,
 	}
@@ -62,7 +60,7 @@ func (b *Blockchain) add_block(ip string) string {
 		prev_hash: last_block.hash,
 		timestamp: time.Now(),
 	}
-	new_block.mine(b.difficulty)
+	new_block.mine(difficulty)
 	b.chain = append(b.chain, new_block)
 	return new_block.hash
 }
@@ -80,14 +78,14 @@ func (b Blockchain) is_valid() bool {
 }
 
 func main() {
-	blockchain := create_blockchain(1)
+	blockchain := create_blockchain()
 
 	fmt.Println(blockchain.is_valid())
 
 	r := gin.Default()
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
-			"message": blockchain.add_block(c.ClientIP()),
+			"message": blockchain.add_block(c.ClientIP(), 4),
 		})
 	})
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
