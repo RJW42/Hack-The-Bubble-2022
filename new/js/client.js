@@ -5,8 +5,6 @@ Client.socket.on('init',function(data){
     // Called on sucseful connection to server 
     scene.player_id = data.id;
     scene.loaded = true;
-
-    console.log(scene.player_id);
 });
 
 // All client side code 

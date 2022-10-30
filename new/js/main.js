@@ -1,6 +1,7 @@
 var scene = new Phaser.Scene('Game');
 var title_scene = new Phaser.Scene('Title');
 var username = "";
+var set_background = false;
 
 
 title_scene.preload = () => {
@@ -84,6 +85,11 @@ scene.update = () => {
   // Check if state is set 
   if(scene.state == null)
     return;
+  if(!set_background && scene.state.players[scene.player_id]) {
+    set_background = true;
+    const colour = scene.state.players[scene.player_id].color;
+    document.body.style.backgroundColor = '#' + colour;
+  }
 
   // Render the game state 
   //  Render Players 
@@ -139,8 +145,6 @@ scene.draw_text = () => {
 }
 
 scene.update_state = (server_state) => {
-  console.log("UPDATE_STATE: " + server_state);
-
   if(!scene.loaded) return;
 
   // Convert the state to client side 
