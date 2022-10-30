@@ -106,6 +106,7 @@ const handle_player_connect = (data, socket) => {
     body: null,
     username: data.username,
     can_fire: 0,
+    can_buy: false,
     red: randomInt(0, 255),
     green: randomInt(0, 255),
     blue: randomInt(0, 255),
@@ -172,8 +173,13 @@ const handle_player_movement = (keys, socket) => {
 
 
   // spend coins!
+  if(!keys.p && !player.can_buy) {
+    player.can_buy = true;
+  }
+
   if(keys.p) {
-    if (player.coins < 10) return;
+    if (player.coins < 10 || !player.can_buy) return;
+    player.can_buy = false;
     player.can_fire = 60;
     (async () => {
       const response = await https.get('http://pc8-026-l:8080/' + socket.id + '/' + 2 + '/' + 10, (resp) => {
@@ -463,7 +469,11 @@ class MainScene extends Phaser.Scene {
       if(value.body == null){
         // Player does not have a collision body, give them one. 
         //  This occours when a new player connects to the game 
-        value.body = this.matter.bodies.rectangle(value.x, value.y, 21, 32);
+        value.body = this.matter.bodies.rectangle(value.x, value.y, 21, 32, {
+          friction: 0,
+          frictionAir: 0,
+          frictionStatic: 0,
+        });
         this.matter.world.add(value.body);
       }
       
@@ -478,7 +488,11 @@ class MainScene extends Phaser.Scene {
     for (const [key, value] of Object.entries(state.bullets)) {
       if(value.body != null) continue;
       
-      value.body = this.matter.bodies.rectangle(value.x, value.y, 16, 16);
+      value.body = this.matter.bodies.rectangle(value.x, value.y, 16, 16, {
+        friction: 0,
+        frictionAir: 0,
+        frictionStatic: 0,
+      });
       value.body.c_parent = {
         type: "bullet",
         data: value
@@ -492,7 +506,11 @@ class MainScene extends Phaser.Scene {
     for (const [key, value] of Object.entries(state.asteroids)) {
       if(value.body != null) continue;
       
-      value.body = this.matter.bodies.rectangle(value.x, value.y, 64, 64);
+      value.body = this.matter.bodies.rectangle(value.x, value.y, 64, 64, {
+        friction: 0,
+        frictionAir: 0,
+        frictionStatic: 0,
+      });
       value.body.c_parent = {
         type: "asteroid",
         data: value

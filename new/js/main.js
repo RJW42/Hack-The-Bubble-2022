@@ -276,7 +276,7 @@ const update_leaderboard = (state) => {
     }
   }
 
-  if(username == current_leader) return;
+  if(username === current_leader) return;
   current_leader = username;
 
   console.log("CHANGING USERNAME");
