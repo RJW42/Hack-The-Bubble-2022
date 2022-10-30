@@ -3,7 +3,7 @@ import http from "http"
 import cors from "cors";
 
 const app = express();
-const port = 42069; // default port to listen
+const port = 42564; // default port to listen
 
 app.use(cors);
 

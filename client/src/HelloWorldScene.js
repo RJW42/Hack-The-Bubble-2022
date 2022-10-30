@@ -7,7 +7,7 @@ export default class HelloWorldScene extends Phaser.Scene {
 
 	constructor() {
 		super('hello-world');
-		this.socket = io("http://localhost:42069");
+		this.socket = io("http://localhost:42564");
 	}
 
 	preload() {
