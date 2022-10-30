@@ -49,7 +49,7 @@ scene.preload = () => {
   scene.load.image('background', 'assets/sprites/galaxy.jpg');
   scene.load.image('player', 'assets/sprites/player.png');
   scene.load.image('enemy', 'assets/sprites/enemy.png');
-  scene.load.image('bullet', 'assets/sprites/dead_body.png');
+  scene.load.image('bullet', 'assets/sprites/bullet.png');
 
   // Init keys 
   scene.keys = {
@@ -87,13 +87,15 @@ scene.update = () => {
   for(const [player_id, player] of Object.entries(scene.state.players)){
     player.obj.x = player.x
     player.obj.y = player.y
-    if(player.obj.texture.key === '__MISSING'){
-      if(player_id == scene.player_id){
-        player.obj.setTexture('player');
-      } else {
-        player.obj.setTexture('enemy');
-      }
-    }
+    // if(player.obj.texture.key === '__MISSING'){
+    //   if(player_id == scene.player_id){
+    //     player.obj.setTexture('player');
+    //   } else {
+    //     player.obj.setTexture('enemy');
+    //   }
+    // }
+
+    // scene.add.circle(player.x, player.y, 10, 0xff1166);
   }
 
   //  Render bullets
@@ -163,11 +165,8 @@ const update_players = (new_state, server_state) => {
       }
       
       usernames_set = false;
-      if(player_id == scene.player_id){
-        return scene.add.sprite(-50, -50, 'player');
-      } else {
-        return scene.add.sprite(-50, -50, 'enemy');
-      }
+
+      return scene.add.rectangle(-50,-50,10,40,parseInt(server_state.players[player_id].color));
     })(player_id, server_state);
 
     new_state.players[player_id] = {
@@ -175,9 +174,7 @@ const update_players = (new_state, server_state) => {
       y: server_state.players[player_id].y,
       obj: obj,
       username: server_state.players[player_id].username,
-      red: server_state.players[player_id].red,
-      green: server_state.players[player_id].green,
-      blue: server_state.players[player_id].blue
+      color: server_state.players[player_id].color
     };
   }
 

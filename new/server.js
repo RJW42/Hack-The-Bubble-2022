@@ -12,6 +12,8 @@ const Phaser = require('phaser');
 const { stat } = require('fs');
 const { Body } = require('matter');
 const https = require('http');
+const Matter = require('matter');
+
 
 // Game Engine Code 
 app.use('/css',express.static(__dirname + '/css'));
@@ -99,11 +101,17 @@ const handle_player_connect = (data, socket) => {
     body: null,
     username: data.username,
     can_fire: true,
+<<<<<<< HEAD
     red: randomInt(0, 255),
     green: randomInt(0, 255),
     blue: randomInt(0, 255),
     coins: 0
+=======
+    color: Math.floor(Math.random()*16777215)
+>>>>>>> 7da4ee190d88bf4484c87f95e91348f49b2eff68
   };
+
+  console.log(socket.player.color);
 
   state.players[socket.id] = socket.player;
   connections[socket.id] = socket;
@@ -150,8 +158,6 @@ const handle_player_movement = (keys, socket) => {
     const vy = player.body.velocity.y;
 
     player.can_fire = false;
-
-    console.log("Bang!: " + vx + ", " + vy);
     
     // Add a new bullet to the state
     state.bullets[server.last_bullet_id++] = {
@@ -237,29 +243,52 @@ class MainScene extends Phaser.Scene {
       } else if(y < 25 && vy < 0) {
         this.matter.body.translate(value.body, {x: 0, y: height - 25}); 
       }
-       
+      
       // Update this player position for the client
       players[key] = {
         x: value.body.position.x,
         y: value.body.position.y,
         username: value.username,
+<<<<<<< HEAD
         red: value.red,
         green: value.green,
         blue: value.blue,
         coins: value.coins,
+=======
+        color: value.color
+>>>>>>> 7da4ee190d88bf4484c87f95e91348f49b2eff68
       };
     }
   }
 
 
   update_and_clone_bullet_data(bullets) {
+    const width = this.sys.canvas.width;
+    const height = this.sys.canvas.height;
+    const bullets_to_del = [];
+
     for (const [key, value] of Object.entries(state.bullets)) {     
+      // Check if shuold remove this bullet
+      const x = value.body.position.x;
+      const y = value.body.position.y;
+      const vx = value.body.velocity.x;
+      const vy = value.body.velocity.y;
+
+      if(x < 20 || y < 20 || x > width - 20 || y > height - 20 || 
+        (Math.abs(vx) < 0.5 && Math.abs(vy) < 0.5)) {
+        removes.push(value.body);
+        bullets_to_del.push(key);
+        continue;
+      }
+
       // Update this player position for the client
       bullets[key] = {
-        x: value.body.position.x,
-        y: value.body.position.y,
+        x: x, 
+        y: y
       };
     }
+
+    bullets_to_del.forEach(id => delete state.bullets[id]);
   }
 
 
@@ -286,7 +315,8 @@ class MainScene extends Phaser.Scene {
     for (const [key, value] of Object.entries(state.bullets)) {
       if(value.body != null) continue;
       
-      value.body = this.matter.bodies.rectangle(value.x, value.y, 21, 32);
+      value.body = this.matter.bodies.rectangle(value.x, value.y, 16, 16);
+      
       this.matter.world.add(value.body);
       this.matter.body.setVelocity(value.body, {x: value.velx, y: value.vely});
     };
