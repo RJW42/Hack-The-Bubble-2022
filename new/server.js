@@ -106,12 +106,12 @@ const handle_player_connect = (data, socket) => {
     vely: 0,
     body: null,
     username: data.username,
-    can_fire: true,
+    can_fire: 0,
     red: randomInt(0, 255),
     green: randomInt(0, 255),
     blue: randomInt(0, 255),
     coins: 0,
-    difficulty: 5,
+    difficulty: 1,
     color: Math.floor(Math.random()*16777215)
   };
 
@@ -171,12 +171,10 @@ const handle_player_movement = (keys, socket) => {
 
   // spend coins!
   if(keys.p) {
-    console.log(player.difficulty)
-    if (player.difficulty <= 2 || player.coins < 10) return;
-    player.difficulty--;
-    player.can_fire = false;
+    if (player.coins < 10) return;
+    player.can_fire = 60;
     (async () => {
-      const response = await https.get('http://pc8-026-l:8080/' + player.difficulty + '/' + 10, (resp) => {
+      const response = await https.get('http://pc8-026-l:8080/' + 2 + '/' + 10, (resp) => {
         let data = '';
       
         // A chunk of data has been received.
@@ -188,7 +186,7 @@ const handle_player_movement = (keys, socket) => {
         resp.on('end', () => {
           console.log(JSON.parse(data));
           player.coins = JSON.parse(data).coins
-          player.can_fire = true
+          player.difficulty++
         });
       
       }).on("error", (err) => {
@@ -197,8 +195,8 @@ const handle_player_movement = (keys, socket) => {
     })();
   }
 
-  if(keys.space && player.body != null && player.can_fire) {
-    player.can_fire = false;
+  if(keys.space && player.body != null && player.can_fire <= 0) {
+    player.can_fire = 60;
 
     const vx = player.body.velocity.x;
     const vy = player.body.velocity.y;
@@ -206,7 +204,7 @@ const handle_player_movement = (keys, socket) => {
     const angle = player.body.angle * Math.PI / 180;
     const mag = Math.sqrt((vx ** 2) + (vy ** 2));
 
-    player.can_fire = false;
+    player.can_fire = 60;
 
     console.log("Bang!: " + mag + ", " + angle);
     
@@ -225,26 +223,26 @@ const handle_player_movement = (keys, socket) => {
       bullet_id: bullet_id
     };
 
-    (async () => {
-      const response = await https.get('http://pc8-026-l:8080/' + player.difficulty, (resp) => {
-        let data = '';
+    // (async () => {
+    //   const response = await https.get('http://pc8-026-l:8080/' + 2, (resp) => {
+    //     let data = '';
       
-        // A chunk of data has been received.
-        resp.on('data', (chunk) => {
-          data += chunk;
-        });
+    //     // A chunk of data has been received.
+    //     resp.on('data', (chunk) => {
+    //       data += chunk;
+    //     });
       
-        // The whole response has been received. Print out the result.
-        resp.on('end', () => {
-          console.log(JSON.parse(data));
-          player.coins = JSON.parse(data).coins
-          player.can_fire = true
-        });
+    //     // The whole response has been received. Print out the result.
+    //     resp.on('end', () => {
+    //       console.log(JSON.parse(data));
+    //       player.coins = JSON.parse(data).coins
+    //       // player.can_fire = true
+    //     });
       
-      }).on("error", (err) => {
-        // console.log("Error: " + err.message);
-      });
-    })();
+    //   }).on("error", (err) => {
+    //     // console.log("Error: " + err.message);
+    //   });
+    // })();
   }
 }
 
@@ -420,6 +418,7 @@ class MainScene extends Phaser.Scene {
 
     // Update the player physics objects  
     for (const [key, value] of Object.entries(state.players)) {
+      value.can_fire -= value.difficulty;
       if(value.body == null){
         // Player does not have a collision body, give them one. 
         //  This occours when a new player connects to the game 
@@ -468,8 +467,28 @@ class MainScene extends Phaser.Scene {
 const handle_bullet_collsion = (bullet, asteroid) => {
   console.log("Killed by: " + bullet.fired_from)
   server.curr_number_of_asteroids--;
-
   state.players[bullet.fired_from].score++;
+
+  (async () => {
+      const response = await https.get('http://pc8-026-l:8080/' + 2, (resp) => {
+        let data = '';
+      
+        // A chunk of data has been received.
+        resp.on('data', (chunk) => {
+          data += chunk;
+        });
+      
+        // The whole response has been received. Print out the result.
+        resp.on('end', () => {
+          console.log(JSON.parse(data));
+          state.players[bullet.fired_from].coins = JSON.parse(data).coins
+          // player.can_fire = true
+        });
+      
+      }).on("error", (err) => {
+        // console.log("Error: " + err.message);
+      });
+    })();
 
   // Remove both the asteroid and the bullet
   removes.push(bullet.body);
