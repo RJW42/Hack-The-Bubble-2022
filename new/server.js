@@ -148,8 +148,8 @@ const handle_player_movement = (keys, socket) => {
     state.bullets[server.last_bullet_id++] = {
       x: player.x,
       y: player.y,
-      velx: player.velx,
-      vely: player.vely,
+      velx: 0,
+      vely: 0,
       body: null,
       fired_from: socket.id
     };
@@ -177,7 +177,8 @@ class MainScene extends Phaser.Scene {
       game_state: state.game_state,
     };
 
-    this.update_player_positions(send_state.players);
+    this.update_and_clone_player_data(send_state.players);
+    this.update_and_clone_bullet_data(send_state.bullets);
     
     // Send the new state to all the players 
     io.emit('update', 
@@ -186,7 +187,7 @@ class MainScene extends Phaser.Scene {
   }
 
 
-  update_player_positions(players) {
+  update_and_clone_player_data(players) {
     const width = this.sys.canvas.width;
     const height = this.sys.canvas.height;
 
@@ -219,8 +220,14 @@ class MainScene extends Phaser.Scene {
   }
 
 
-  update_bullet_positions(bullets) {
-
+  update_and_clone_bullet_data(bullets) {
+    for (const [key, value] of Object.entries(state.bullets)) {     
+      // Update this player position for the client
+      bullets[key] = {
+        x: value.body.position.x,
+        y: value.body.position.y,
+      };
+    }
   }
 
 
