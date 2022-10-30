@@ -90,24 +90,6 @@ scene.update = () => {
   for(const [player_id, player] of Object.entries(scene.state.players)){
     player.obj.x = player.x
     player.obj.y = player.y
-    // if(player.obj.texture.key === '__MISSING'){
-    //   if(player_id == scene.player_id){
-    //     player.obj.setTexture('player');
-    //   } else {
-    //     player.obj.setTexture('enemy');
-    //   }
-    // }
-    // // console.log("angle", player.angle);
-    // player.obj.setAngle(player.angle + 90);
-    // if(player.obj.texture.key === '__MISSING'){
-    //   if(player_id == scene.player_id){
-    //     player.obj.setTexture('player');
-    //   } else {
-    //     player.obj.setTexture('enemy');
-    //   }
-    // }
-
-    // scene.add.circle(player.x, player.y, 10, 0xff1166);
   }
 
   //  Render bullets
@@ -195,8 +177,10 @@ const update_players = (new_state, server_state) => {
       }
 
       return scene.add
-      .rectangle(-50,-50,10,40,parseInt(server_state.players[player_id].color))
+      .triangle(-50,-50, 0, 55, 40, 55, 20, 0, parseInt(server_state.players[player_id].color))
+      .setFillStyle(parseInt(server_state.players[player_id].color))
       .setStrokeStyle(2, 0xffffff, 1);
+      
     })(player_id, server_state);
 
     // Setting rotation
