@@ -92,6 +92,8 @@ scene.update = () => {
         player.obj.setTexture('enemy');
       }
     }
+    // console.log("angle", player.angle);
+    player.obj.setAngle(player.angle + 90);
   }
 
   //  Render bullets
@@ -172,6 +174,7 @@ const update_players = (new_state, server_state) => {
       x: server_state.players[player_id].x,
       y: server_state.players[player_id].y,
       obj: obj,
+      angle: server_state.players[player_id].angle,
       username: server_state.players[player_id].username
     };
   }
