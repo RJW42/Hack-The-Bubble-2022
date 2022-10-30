@@ -11,6 +11,7 @@ require('@geckos.io/phaser-on-nodejs')
 const Phaser = require('phaser');
 const { stat } = require('fs');
 const { Body } = require('matter');
+const Matter = require('matter');
 
 
 // Game Engine Code 
@@ -149,8 +150,6 @@ const handle_player_movement = (keys, socket) => {
     const vy = player.body.velocity.y;
 
     player.can_fire = false;
-
-    console.log("Bang!: " + vx + ", " + vy);
     
     // Add a new bullet to the state
     state.bullets[server.last_bullet_id++] = {
@@ -232,13 +231,32 @@ class MainScene extends Phaser.Scene {
 
 
   update_and_clone_bullet_data(bullets) {
+    const width = this.sys.canvas.width;
+    const height = this.sys.canvas.height;
+    const bullets_to_del = [];
+
     for (const [key, value] of Object.entries(state.bullets)) {     
+      // Check if shuold remove this bullet
+      const x = value.body.position.x;
+      const y = value.body.position.y;
+      const vx = value.body.velocity.x;
+      const vy = value.body.velocity.y;
+
+      if(x < 20 || y < 20 || x > width - 20 || y > height - 20 || 
+        (Math.abs(vx) < 0.5 && Math.abs(vy) < 0.5)) {
+        removes.push(value.body);
+        bullets_to_del.push(key);
+        continue;
+      }
+
       // Update this player position for the client
       bullets[key] = {
-        x: value.body.position.x,
-        y: value.body.position.y,
+        x: x, 
+        y: y
       };
     }
+
+    bullets_to_del.forEach(id => delete state.bullets[id]);
   }
 
 
@@ -265,7 +283,8 @@ class MainScene extends Phaser.Scene {
     for (const [key, value] of Object.entries(state.bullets)) {
       if(value.body != null) continue;
       
-      value.body = this.matter.bodies.rectangle(value.x, value.y, 21, 32);
+      value.body = this.matter.bodies.rectangle(value.x, value.y, 16, 16);
+      
       this.matter.world.add(value.body);
       this.matter.body.setVelocity(value.body, {x: value.velx, y: value.vely});
     };
