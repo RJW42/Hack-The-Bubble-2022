@@ -105,18 +105,20 @@ func main() {
 		})
 	})
 	r.GET("/:id/:difficulty", func(c *gin.Context) {
+		id := c.Param("id")
 		difficulty, _ := strconv.Atoi(c.Param("difficulty"))
 		c.JSON(http.StatusOK, gin.H {
-			"hash": blockchain.add_block(c.ClientIP(), 0, difficulty),
-			"coins": blockchain.coin_count(c.ClientIP()),
+			"hash": blockchain.add_block(id, 0, difficulty),
+			"coins": blockchain.coin_count(id),
 		})
 	})
 	r.GET("/:id/:difficulty/:amount", func(c *gin.Context) {
+		id:= c.Param("id")
 		amount, _ := strconv.Atoi(c.Param("amount"))
 		difficulty, _ := strconv.Atoi(c.Param("difficulty"))
 		c.JSON(http.StatusOK, gin.H {
-			"hash": blockchain.add_block(c.ClientIP(), amount, difficulty),
-			"coins": blockchain.coin_count(c.ClientIP()),
+			"hash": blockchain.add_block(id, amount, difficulty),
+			"coins": blockchain.coin_count(id),
 		})
 	})
 	
