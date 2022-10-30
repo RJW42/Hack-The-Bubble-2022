@@ -1,14 +1,21 @@
 import express from "express";
+import http from "http"
+import {Server} from "socket.io";
 
 const app = express();
 const port = 42069; // default port to listen
 
-// define a route handler for the default home page
-app.get( "/", ( req: any, res: any ) => {
-    res.send( "Hello world!" );
-} );
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: '*'
+  }
+});
 
-// start the Express server
-app.listen( port, () => {
-    console.log( `server started at http://localhost:${ port }` );
-} );
+io.on('connection', (socket: any) => {
+  console.log('a user connected');
+});
+
+server.listen(port, () => {
+  console.log('listening on localhost:' + port);
+});

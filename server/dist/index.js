@@ -4,14 +4,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
+const http_1 = __importDefault(require("http"));
+const socket_io_1 = require("socket.io");
 const app = (0, express_1.default)();
 const port = 42069; // default port to listen
-// define a route handler for the default home page
-app.get("/", (req, res) => {
-    res.send("Hello world!");
+const server = http_1.default.createServer(app);
+const io = new socket_io_1.Server(server, {
+    cors: {
+        origin: false
+    }
 });
-// start the Express server
-app.listen(port, () => {
-    console.log(`server started at http://localhost:${port}`);
+io.on('connection', (socket) => {
+    console.log('a user connected');
+});
+server.listen(port, () => {
+    console.log('listening on localhost:' + port);
 });
 //# sourceMappingURL=index.js.map
