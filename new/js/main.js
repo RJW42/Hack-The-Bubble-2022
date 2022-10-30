@@ -172,7 +172,10 @@ const update_players = (new_state, server_state) => {
       x: server_state.players[player_id].x,
       y: server_state.players[player_id].y,
       obj: obj,
-      username: server_state.players[player_id].username
+      username: server_state.players[player_id].username,
+      red: server_state.players[player_id].red,
+      green: server_state.players[player_id].green,
+      blue: server_state.players[player_id].blue
     };
   }
 

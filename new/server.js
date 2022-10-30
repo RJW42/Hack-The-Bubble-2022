@@ -214,7 +214,10 @@ class MainScene extends Phaser.Scene {
       players[key] = {
         x: value.body.position.x,
         y: value.body.position.y,
-        username: value.username
+        username: value.username,
+        red: value.red,
+        green: value.green,
+        blue: value.blue,
       };
     }
   }
