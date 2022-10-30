@@ -34,7 +34,8 @@ server.listen(42564,function(){ // Listens to port 8081
 
 server.last_player_id = 0;
 server.last_bullet_id = 0;
-
+server.last_asteroid_id = 0;
+server.curr_number_of_asteroids = 0;
 
 // Constants
 const PLAYING = 0; 
@@ -44,6 +45,7 @@ const PLAYING = 0;
 const state = {
     players: {},
     bullets: {},
+    asteroids: {},
     game_state: PLAYING,
 };
 const connections = {};
@@ -96,6 +98,10 @@ const handle_player_connect = (data, socket) => {
   socket.player = {
     x: randomInt(0, 1400),
     y: randomInt(0, 800),
+    score: 0,
+    angle: 0,
+    velArg: 0,
+    speed: 0,
     velx: 0,
     vely: 0,
     body: null,
@@ -135,16 +141,29 @@ const handle_player_movement = (keys, socket) => {
 
   player.velx = 0;
   player.vely = 0;
-  augment =  0.001
+  player.speed = 0;
+  player.velArg = 0;
+  augment =  0.0005;
 
-  if(keys.right)
-    player.velx = augment;
-  if(keys.left)
-    player.velx = -augment;
-  if(keys.up)
-    player.vely = -augment;
-  if(keys.down)
-    player.vely = augment;
+  if(keys.right) {
+    player.velArg = 0.12;
+    // player.velx = augment;
+  }
+    
+    
+  if(keys.left) {
+    player.velArg = -0.12;
+    // player.velx = -augment;
+  }
+    
+  if(keys.up) {
+// player.vely = -augment;
+    player.speed = augment;
+  }
+    
+  if(keys.down) {
+// player.vely = augment;
+  }
 
   // if(!keys.space && !player.can_fire)
   //   player.can_fire = true;
@@ -184,16 +203,26 @@ const handle_player_movement = (keys, socket) => {
     const vx = player.body.velocity.x;
     const vy = player.body.velocity.y;
 
+    const angle = player.body.angle * Math.PI / 180;
+    const mag = Math.sqrt((vx ** 2) + (vy ** 2));
+
     player.can_fire = false;
+
+    console.log("Bang!: " + mag + ", " + angle);
     
+    const bullet_id = server.last_bullet_id++;
+
     // Add a new bullet to the state
-    state.bullets[server.last_bullet_id++] = {
-      x: player.body.position.x + vx * 5,
-      y: player.body.position.y + vy * 5,
-      velx: vx * 2,
-      vely: vy * 2,
+    state.bullets[bullet_id] = {
+      x: player.body.position.x + (Math.cos(angle) * 30),
+      y: player.body.position.y + (Math.sin(angle) * 30),
+      velx : Math.cos(angle) * Math.max(Math.min(mag, 6), 1) * (5),
+      vely : Math.sin(angle) * Math.max(Math.min(mag, 6), 1) * (5),
+      // velx: Math.cos(angle) * mag * 10,
+      // vely: Math.sin(angle) * mag * 10,
       body: null,
-      fired_from: socket.id
+      fired_from: socket.id,
+      bullet_id: bullet_id
     };
 
     (async () => {
@@ -213,11 +242,10 @@ const handle_player_movement = (keys, socket) => {
         });
       
       }).on("error", (err) => {
-        console.log("Error: " + err.message);
+        // console.log("Error: " + err.message);
       });
     })();
   }
-  
 }
 
 // Serverside Game Code 
@@ -227,9 +255,20 @@ global.phaserOnNodeFPS = FPS
 // MainScene
 class MainScene extends Phaser.Scene {
   create(){
+    this.matter.world.on('collisionstart', (e, ba, bb) => {
+      if(ba.c_parent && ba.c_parent.type === "bullet" && 
+         bb.c_parent && bb.c_parent.type === "asteroid") {
+        handle_bullet_collsion(ba.c_parent.data, bb.c_parent.data);
+      } else if(bb.c_parent && bb.c_parent.type === "bullet" && 
+        ba.c_parent && ba.c_parent.type === "asteroid") {
+        handle_bullet_collsion(bb.c_parent.data, ba.c_parent.data);
+      }
+    });
   }
 
   update(){
+    this.random_asteroid_spawn();
+
     // Update game state 
     this.update_collision_bodies();
 
@@ -237,11 +276,13 @@ class MainScene extends Phaser.Scene {
     const send_state = {
       players: {},
       bullets: {},
+      asteroids: {},
       game_state: state.game_state,
     };
 
     this.update_and_clone_player_data(send_state.players);
     this.update_and_clone_bullet_data(send_state.bullets);
+    this.update_and_clone_asteroid_data(send_state.asteroids);
     
     // Send the new state to all the players 
     io.emit('update', 
@@ -259,6 +300,7 @@ class MainScene extends Phaser.Scene {
       const y = value.body.position.y;
       const vx = value.body.velocity.x;
       const vy = value.body.velocity.y;
+      const a = value.body.angle;
 
       // Move the players from on side to the other 
       if(x >= width - 25 && vx > 0) {
@@ -277,6 +319,7 @@ class MainScene extends Phaser.Scene {
       players[key] = {
         x: value.body.position.x,
         y: value.body.position.y,
+        angle: a,
         username: value.username,
         red: value.red,
         green: value.green,
@@ -318,6 +361,55 @@ class MainScene extends Phaser.Scene {
   }
 
 
+  update_and_clone_asteroid_data(asteroids) {
+    const width = this.sys.canvas.width;
+    const height = this.sys.canvas.height;
+    const asteroid_to_del = [];
+
+    for (const [key, value] of Object.entries(state.asteroids)) {     
+      // Check if shuold remove this asteroid
+      const x = value.body.position.x;
+      const y = value.body.position.y;
+      const vx = value.body.velocity.x;
+      const vy = value.body.velocity.y;
+
+      if(x < 20 || y < 20 || x > width - 20 || y > height - 20 || 
+        (Math.abs(vx) < 0.5 && Math.abs(vy) < 0.5)) {
+        server.curr_number_of_asteroids--;
+        removes.push(value.body);
+        asteroid_to_del.push(key);
+        continue;
+      }
+
+      // Update this player position for the client
+      asteroids[key] = {
+        x: value.body.position.x,
+        y: value.body.position.y,
+      };
+    }
+
+    asteroid_to_del.forEach(id => delete state.asteroids[id]);
+  }
+
+  random_asteroid_spawn() {
+    if(server.curr_number_of_asteroids > 10) return;
+
+    // Spawn an asteroid 
+    server.curr_number_of_asteroids++;
+
+    const asteroid_id = server.last_asteroid_id++;
+
+    state.asteroids[asteroid_id] = {
+      x: randomInt(0, 1400),
+      y: randomInt(0, 800),
+      velx: randomInt(-10, 10),
+      vely: randomInt(-10, 10),
+      body: null,
+      asteroid_id: asteroid_id,
+    };
+  }
+
+
   update_collision_bodies() {
     // Remove any dead collisions 
     //  This occours when a player disconects from the game 
@@ -334,7 +426,12 @@ class MainScene extends Phaser.Scene {
         value.body = this.matter.bodies.rectangle(value.x, value.y, 21, 32);
         this.matter.world.add(value.body);
       }
-      this.matter.body.applyForce(value.body, value.body.position, {x: value.velx, y: value.vely});
+      
+      this.matter.body.setAngle(value.body, (value.body.angle * Math.PI / 180.0) + value.velArg);
+      // console.log(value.body.angle, value.velArg);
+      this.matter.applyForceFromAngle(value.body, value.speed);
+      this.matter.body.setAngle(value.body, value.body.angle * 180 / Math.PI)
+      // this.matter.body.applyForce(value.body, value.body.position, {x: value.velx, y: value.vely});
     }
 
     // Update the bullet physics objects
@@ -342,11 +439,44 @@ class MainScene extends Phaser.Scene {
       if(value.body != null) continue;
       
       value.body = this.matter.bodies.rectangle(value.x, value.y, 16, 16);
+      value.body.c_parent = {
+        type: "bullet",
+        data: value
+      };
       
       this.matter.world.add(value.body);
       this.matter.body.setVelocity(value.body, {x: value.velx, y: value.vely});
     };
+
+    // Update the bullet physics objects
+    for (const [key, value] of Object.entries(state.asteroids)) {
+      if(value.body != null) continue;
+      
+      value.body = this.matter.bodies.rectangle(value.x, value.y, 64, 64);
+      value.body.c_parent = {
+        type: "asteroid",
+        data: value
+      };
+
+      this.matter.world.add(value.body);
+      this.matter.body.setVelocity(value.body, {x: value.velx, y: value.vely});
+    };
   }
+}
+
+
+const handle_bullet_collsion = (bullet, asteroid) => {
+  console.log("Killed by: " + bullet.fired_from)
+  server.curr_number_of_asteroids--;
+
+  state.players[bullet.fired_from].score++;
+
+  // Remove both the asteroid and the bullet
+  removes.push(bullet.body);
+  removes.push(asteroid.body);
+
+  delete state.bullets[bullet.bullet_id];
+  delete state.asteroids[asteroid.asteroid_id];
 }
 
 // prepare the config for Phaser

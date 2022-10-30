@@ -41,7 +41,8 @@ const SPECTATING = 3;
 scene.state = {
   id: 0,
   players: {},
-  bullets: {}
+  bullets: {},
+  asteroids: {}
 };
 
 scene.preload = () => {
@@ -50,6 +51,7 @@ scene.preload = () => {
   scene.load.image('player', 'assets/sprites/player.png');
   scene.load.image('enemy', 'assets/sprites/enemy.png');
   scene.load.image('bullet', 'assets/sprites/bullet.png');
+  scene.load.image('asteroid', 'assets/sprites/asteroid.png');
 
   // Init keys 
   scene.keys = {
@@ -93,6 +95,15 @@ scene.update = () => {
     //     player.obj.setTexture('enemy');
     //   }
     // }
+    // // console.log("angle", player.angle);
+    // player.obj.setAngle(player.angle + 90);
+    // if(player.obj.texture.key === '__MISSING'){
+    //   if(player_id == scene.player_id){
+    //     player.obj.setTexture('player');
+    //   } else {
+    //     player.obj.setTexture('enemy');
+    //   }
+    // }
 
     // scene.add.circle(player.x, player.y, 10, 0xff1166);
   }
@@ -103,6 +114,15 @@ scene.update = () => {
     bullet.obj.y = bullet.y
     if(bullet.obj.texture.key === '__MISSING'){
       bullet.obj.setTexture('bullet');
+    }
+  }
+
+  //  Render asteroids
+  for(const [asteroid_id, asteroid] of Object.entries(scene.state.asteroids)){
+    asteroid.obj.x = asteroid.x
+    asteroid.obj.y = asteroid.y
+    if(asteroid.obj.texture.key === '__MISSING'){
+      asteroid.obj.setTexture('asteroid');
     }
   }
 
@@ -141,6 +161,7 @@ scene.update_state = (server_state) => {
     id: 0,
     players: {},
     bullets: {},
+    asteroids: {},
     game_state: server_state.game_state,
   }
 
@@ -150,6 +171,9 @@ scene.update_state = (server_state) => {
 
   // Update the client side bullets 
   update_bullets(new_state, server_state);
+
+  // Update the client side asteroids
+  update_asteroids(new_state, server_state);
 
   // Update the state 
   scene.state = new_state;
@@ -170,10 +194,14 @@ const update_players = (new_state, server_state) => {
       return scene.add.rectangle(-50,-50,10,40,parseInt(server_state.players[player_id].color));
     })(player_id, server_state);
 
+    // Setting rotation
+    obj.setAngle(server_state.players[player_id].angle + 90);
+
     new_state.players[player_id] = {
       x: server_state.players[player_id].x,
       y: server_state.players[player_id].y,
       obj: obj,
+      angle: server_state.players[player_id].angle,
       username: server_state.players[player_id].username,
       color: server_state.players[player_id].color,
       coins: server_state.players[player_id].coins
@@ -217,6 +245,33 @@ const update_bullets = (new_state, server_state) => {
   }
 }
 
+
+const update_asteroids = (new_state, server_state) => {
+    // Get all asteroids in the server state
+  for(let asteroid_id in server_state.asteroids) {
+    // Check if asteroid is already created 
+    const obj = ((asteroid_id) => {;
+      if(scene.state.asteroids[asteroid_id]){
+        return scene.state.asteroids[asteroid_id].obj;
+      }
+      
+      return scene.add.sprite(-50, -50, 'asteroid');
+    })(asteroid_id, server_state);
+
+    new_state.asteroids[asteroid_id] = {
+      x: server_state.asteroids[asteroid_id].x,
+      y: server_state.asteroids[asteroid_id].y,
+      obj: obj,
+    };
+  }
+
+  // Check for deleted asteroids 
+  for(let asteroid_id in scene.state.asteroids){
+    if(!new_state.asteroids[asteroid_id]){
+      scene.state.asteroids[asteroid_id].obj.destroy(true);
+    }
+  }
+}
 
 const config = {
   type: Phaser.AUTO,
