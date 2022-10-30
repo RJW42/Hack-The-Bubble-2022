@@ -61,39 +61,12 @@ io.on('connection', (socket) => {
 
     socket.emit('connected');
     // socket.on('start', () => {
-    //     console.log('starting game');
-    //     state.game_state = PLAYING
     // });
 
     // socket.on('reset', () => {
-    //     console.log('resetting game');
-    //     state.team_0_score = 0;
-    //     state.team_1_score = 0;
-    //     state.reset_ball = true;
     // })
 
     // socket.on('purge', () => {
-    //     return;
-    //     /*
-    //     console.log('purging game');
-    //     state.players = {
-        
-    //         },
-    //     state.game_state = WAITING_FOR_PLAYERS;
-    //     state.time_left = 0;
-    //     state.team_0_score = 0;
-    //     state.team_1_score = 0;
-    //     state.team_0_count = 0;
-    //     state.team_1_count = 0;
-    //     state.reset_ball = true;
-        
-    //     for(const [id_, socket_] of Object.entries(connections)){
-    //         removes.push(socket_.player.body);
-    //         socket_.disconnect();
-    //     }
-
-    //     connections = {};
-    //     */
     // })
   });
 
@@ -227,7 +200,7 @@ class MainScene extends Phaser.Scene {
     //  This occours when a player disconects from the game 
     removes.forEach(body => {
       this.matter.world.remove(body);    
-    })
+    });
     removes.length = 0;
 
     // Update the player physics objects  
