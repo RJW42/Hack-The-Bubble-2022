@@ -101,14 +101,11 @@ const handle_player_connect = (data, socket) => {
     body: null,
     username: data.username,
     can_fire: true,
-<<<<<<< HEAD
     red: randomInt(0, 255),
     green: randomInt(0, 255),
     blue: randomInt(0, 255),
-    coins: 0
-=======
+    coins: 0,
     color: Math.floor(Math.random()*16777215)
->>>>>>> 7da4ee190d88bf4484c87f95e91348f49b2eff68
   };
 
   console.log(socket.player.color);
@@ -249,14 +246,11 @@ class MainScene extends Phaser.Scene {
         x: value.body.position.x,
         y: value.body.position.y,
         username: value.username,
-<<<<<<< HEAD
         red: value.red,
         green: value.green,
         blue: value.blue,
         coins: value.coins,
-=======
         color: value.color
->>>>>>> 7da4ee190d88bf4484c87f95e91348f49b2eff68
       };
     }
   }
