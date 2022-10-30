@@ -100,10 +100,10 @@ const handle_player_connect = (data, socket) => {
     body: null,
     username: data.username,
     can_fire: true,
-    red: randomInt(0, 255),
-    green: randomInt(0, 255),
-    blue: randomInt(0, 255)
+    color: Math.floor(Math.random()*16777215)
   };
+
+  console.log(socket.player.color);
 
   state.players[socket.id] = socket.player;
   connections[socket.id] = socket;
@@ -216,15 +216,13 @@ class MainScene extends Phaser.Scene {
       } else if(y < 25 && vy < 0) {
         this.matter.body.translate(value.body, {x: 0, y: height - 25}); 
       }
-       
+      
       // Update this player position for the client
       players[key] = {
         x: value.body.position.x,
         y: value.body.position.y,
         username: value.username,
-        red: value.red,
-        green: value.green,
-        blue: value.blue,
+        color: value.color
       };
     }
   }
