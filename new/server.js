@@ -328,13 +328,33 @@ class MainScene extends Phaser.Scene {
 
 
   update_and_clone_asteroid_data(asteroids) {
+    const width = this.sys.canvas.width;
+    const height = this.sys.canvas.height;
+    const asteroid_to_del = [];
+
     for (const [key, value] of Object.entries(state.asteroids)) {     
+      // Check if shuold remove this asteroid
+      const x = value.body.position.x;
+      const y = value.body.position.y;
+      const vx = value.body.velocity.x;
+      const vy = value.body.velocity.y;
+
+      if(x < 20 || y < 20 || x > width - 20 || y > height - 20 || 
+        (Math.abs(vx) < 0.5 && Math.abs(vy) < 0.5)) {
+        server.curr_number_of_asteroids--;
+        removes.push(value.body);
+        asteroid_to_del.push(key);
+        continue;
+      }
+
       // Update this player position for the client
       asteroids[key] = {
         x: value.body.position.x,
         y: value.body.position.y,
       };
     }
+
+    asteroid_to_del.forEach(id => delete state.asteroids[id]);
   }
 
   random_asteroid_spawn() {
