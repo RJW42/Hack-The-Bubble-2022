@@ -81,6 +81,7 @@ scene.update = () => {
     return;
 
   // Render the game state 
+  //  Render Players 
   for(const [player_id, player] of Object.entries(scene.state.players)){
     player.obj.x = player.x
     player.obj.y = player.y
@@ -90,6 +91,15 @@ scene.update = () => {
       } else {
         player.obj.setTexture('enemy');
       }
+    }
+  }
+
+  //  Render bullets
+  for(const [bullet_id, bullet] of Object.entries(scene.state.bullets)){
+    bullet.obj.x = bullet.x
+    bullet.obj.y = bullet.y
+    if(bullet.obj.texture.key === '__MISSING'){
+      bullet.obj.setTexture('bullet');
     }
   }
 
@@ -177,8 +187,6 @@ const update_players = (new_state, server_state) => {
 
 
 const update_bullets = (new_state, server_state) => {
-  console.log(server_state);
-
   // Get all bullets in the server state
   for(let bullet_id in server_state.bullets) {
     // Check if bullet is already created 
@@ -187,7 +195,7 @@ const update_bullets = (new_state, server_state) => {
         return scene.state.bullets[bullet_id].obj;
       }
       
-      return scene.add.sprite(-50, -50, 'enemy')
+      return scene.add.sprite(-50, -50, 'bullet');
     })(bullet_id, server_state);
 
     new_state.bullets[bullet_id] = {
