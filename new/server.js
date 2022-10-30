@@ -14,7 +14,6 @@ const { Body } = require('matter');
 const https = require('http');
 const Matter = require('matter');
 
-
 // Game Engine Code 
 app.use('/css',express.static(__dirname + '/css'));
 app.use('/js',express.static(__dirname + '/js'));
@@ -113,7 +112,9 @@ const handle_player_connect = (data, socket) => {
 
     coins: 0,
     difficulty: 1,
-    color: Math.floor(Math.random()*16777215)
+    color: Math.floor(Math.random()*16777215),
+
+    pid: -1
   };
 
   console.log(socket.player.color);
@@ -175,7 +176,7 @@ const handle_player_movement = (keys, socket) => {
     if (player.coins < 10) return;
     player.can_fire = 60;
     (async () => {
-      const response = await https.get('http://pc8-026-l:8080/' + 2 + '/' + 10, (resp) => {
+      const response = await https.get('http://pc8-026-l:8080/' + socket.id + '/' + 2 + '/' + 10, (resp) => {
         let data = '';
       
         // A chunk of data has been received.
@@ -462,13 +463,13 @@ class MainScene extends Phaser.Scene {
 }
 
 
-const handle_bullet_collsion = (bullet, asteroid) => {
+const handle_bullet_collsion = (bullet, asteroid, socket) => {
   console.log("Killed by: " + bullet.fired_from)
   server.curr_number_of_asteroids--;
   state.players[bullet.fired_from].score++;
 
   (async () => {
-      const response = await https.get('http://pc8-026-l:8080/' + 2, (resp) => {
+      const response = await https.get('http://pc8-026-l:8080/' + bullet.fired_from + '/' + 2, (resp) => {
         let data = '';
       
         // A chunk of data has been received.
