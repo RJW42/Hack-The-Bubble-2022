@@ -10,7 +10,9 @@
   "license": "ISC",
   "dependencies": {
     "@geckos.io/phaser-on-nodejs": "^1.2.7",
+    "axios": "^1.1.3",
     "express": "^4.17.3",
+    "got": "^12.5.2",
     "matter": "^0.2.0",
     "phaser": "^3.55.2",
     "phaser3-rex-plugins": "^1.1.67",

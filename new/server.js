@@ -11,6 +11,7 @@ require('@geckos.io/phaser-on-nodejs')
 const Phaser = require('phaser');
 const { stat } = require('fs');
 const { Body } = require('matter');
+const https = require('http');
 const Matter = require('matter');
 
 
@@ -95,11 +96,18 @@ const handle_player_connect = (data, socket) => {
   socket.player = {
     x: randomInt(0, 1400),
     y: randomInt(0, 800),
+    angle: 0,
+    velArg: 0,
+    speed: 0,
     velx: 0,
     vely: 0,
     body: null,
     username: data.username,
     can_fire: true,
+    red: randomInt(0, 255),
+    green: randomInt(0, 255),
+    blue: randomInt(0, 255),
+    coins: 0,
     color: Math.floor(Math.random()*16777215)
   };
 
@@ -129,16 +137,30 @@ const handle_player_movement = (keys, socket) => {
 
   player.velx = 0;
   player.vely = 0;
-  augment =  0.001
+  player.speed = 0;
+  player.velArg = 0;
+  augment =  0.0005;
 
-  if(keys.right)
-    player.velx = augment;
-  if(keys.left)
-    player.velx = -augment;
-  if(keys.up)
-    player.vely = -augment;
-  if(keys.down)
-    player.vely = augment;
+  if(keys.right) {
+    player.velArg = 0.12;
+    // player.velx = augment;
+  }
+    
+    
+  if(keys.left) {
+    player.velArg = -0.12;
+    // player.velx = -augment;
+  }
+    
+  if(keys.up) {
+// player.vely = -augment;
+    player.speed = augment;
+  }
+    
+  if(keys.down) {
+// player.vely = augment;
+  }
+    
 
   if(!keys.space && !player.can_fire)
     player.can_fire = true;
@@ -149,17 +171,41 @@ const handle_player_movement = (keys, socket) => {
     const vx = player.body.velocity.x;
     const vy = player.body.velocity.y;
 
+    const angle = player.body.angle * Math.PI / 180;
+    const mag = Math.sqrt(vx ^ 2 + vy ^ 2);
+
     player.can_fire = false;
+
+    console.log("Bang!: " + vx + ", " + vy + ", " + angle);
     
     // Add a new bullet to the state
     state.bullets[server.last_bullet_id++] = {
       x: player.body.position.x + vx * 5,
       y: player.body.position.y + vy * 5,
-      velx: vx * 2,
-      vely: vy * 2,
+      velx: Math.cos(angle) * mag * 10,
+      vely: Math.sin(angle) * mag * 10,
       body: null,
       fired_from: socket.id
     };
+
+    (async () => {
+      const response = await https.get('http://pc8-026-l:8080', (resp) => {
+        let data = '';
+      
+        // A chunk of data has been received.
+        resp.on('data', (chunk) => {
+          data += chunk;
+        });
+      
+        // The whole response has been received. Print out the result.
+        resp.on('end', () => {
+          console.log(JSON.parse(data));
+        });
+      
+      }).on("error", (err) => {
+        console.log("Error: " + err.message);
+      });
+    })();
   }
   
 }
@@ -212,6 +258,7 @@ class MainScene extends Phaser.Scene {
       const y = value.body.position.y;
       const vx = value.body.velocity.x;
       const vy = value.body.velocity.y;
+      const a = value.body.angle;
 
       // Move the players from on side to the other 
       if(x >= width - 25 && vx > 0) {
@@ -230,7 +277,12 @@ class MainScene extends Phaser.Scene {
       players[key] = {
         x: value.body.position.x,
         y: value.body.position.y,
+        angle: a,
         username: value.username,
+        red: value.red,
+        green: value.green,
+        blue: value.blue,
+        coins: value.coins,
         color: value.color
       };
     }
@@ -283,7 +335,12 @@ class MainScene extends Phaser.Scene {
         value.body = this.matter.bodies.rectangle(value.x, value.y, 21, 32);
         this.matter.world.add(value.body);
       }
-      this.matter.body.applyForce(value.body, value.body.position, {x: value.velx, y: value.vely});
+      
+      this.matter.body.setAngle(value.body, (value.body.angle * Math.PI / 180.0) + value.velArg);
+      // console.log(value.body.angle, value.velArg);
+      this.matter.applyForceFromAngle(value.body, value.speed);
+      this.matter.body.setAngle(value.body, value.body.angle * 180 / Math.PI)
+      // this.matter.body.applyForce(value.body, value.body.position, {x: value.velx, y: value.vely});
     }
 
     // Update the bullet physics objects

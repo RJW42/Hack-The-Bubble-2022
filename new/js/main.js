@@ -94,6 +94,15 @@ scene.update = () => {
     //     player.obj.setTexture('enemy');
     //   }
     // }
+    // // console.log("angle", player.angle);
+    // player.obj.setAngle(player.angle + 90);
+    // if(player.obj.texture.key === '__MISSING'){
+    //   if(player_id == scene.player_id){
+    //     player.obj.setTexture('player');
+    //   } else {
+    //     player.obj.setTexture('enemy');
+    //   }
+    // }
 
     // scene.add.circle(player.x, player.y, 10, 0xff1166);
   }
@@ -169,10 +178,14 @@ const update_players = (new_state, server_state) => {
       return scene.add.rectangle(-50,-50,10,40,parseInt(server_state.players[player_id].color));
     })(player_id, server_state);
 
+    // Setting rotation
+    obj.setAngle(scene.state.players[player_id].angle + 90);
+
     new_state.players[player_id] = {
       x: server_state.players[player_id].x,
       y: server_state.players[player_id].y,
       obj: obj,
+      angle: server_state.players[player_id].angle,
       username: server_state.players[player_id].username,
       color: server_state.players[player_id].color
     };
