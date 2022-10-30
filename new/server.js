@@ -35,7 +35,7 @@ server.listen(42564,function(){ // Listens to port 8081
 server.last_player_id = 0;
 server.last_bullet_id = 0;
 server.last_asteroid_id = 0;
-
+server.curr_number_of_asteroids = 0;
 
 // Constants
 const PLAYING = 0; 
@@ -98,6 +98,7 @@ const handle_player_connect = (data, socket) => {
   socket.player = {
     x: randomInt(0, 1400),
     y: randomInt(0, 800),
+    score: 0,
     angle: 0,
     velArg: 0,
     speed: 0,
@@ -180,29 +181,18 @@ const handle_player_movement = (keys, socket) => {
     console.log("Bang!: " + vx + ", " + vy + ", " + angle);
     
     // Add a new bullet to the state
-    state.bullets[server.last_bullet_id++] = {
+    const bullet_id = server.last_bullet_id++
+
+    state.bullets[bullet_id] = {
       x: player.body.position.x + (Math.cos(angle) * 40),
       y: player.body.position.y + (Math.sin(angle) * 40),
       velx: Math.cos(angle) * mag * 10,
       vely: Math.sin(angle) * mag * 10,
       body: null,
-      fired_from: socket.id
+      fired_from: socket.id,
+      bullet_id: bullet_id
     };
 
-<<<<<<< HEAD
-    state.asteroids[server.last_asteroid_id++] = {
-      x: player.body.position.x + vx * 5,
-      y: player.body.position.y + vy * 5,
-      velx: vx * 2,
-      vely: vy * 2,
-      body: null,
-      fired_from: socket.id
-    };
-
-
-
-
-=======
     (async () => {
       const response = await https.get('http://pc8-026-l:8080', (resp) => {
         let data = '';
@@ -221,9 +211,7 @@ const handle_player_movement = (keys, socket) => {
         // console.log("Error: " + err.message);
       });
     })();
->>>>>>> 02e1d13d5cfd2e212395c33c8a9e7158e166661d
   }
-  
 }
 
 // Serverside Game Code 
@@ -236,15 +224,16 @@ class MainScene extends Phaser.Scene {
     this.matter.world.on('collisionstart', (e, ba, bb) => {
       if(ba.c_parent && ba.c_parent.type === "bullet" && 
          bb.c_parent && bb.c_parent.type === "asteroid") {
-        handle_bullet_collsion(ba.c_parent, bb.c_parent);
+        handle_bullet_collsion(ba.c_parent.data, bb.c_parent.data);
       } else if(bb.c_parent && bb.c_parent.type === "bullet" && 
         ba.c_parent && ba.c_parent.type === "asteroid") {
-        handle_bullet_collsion(bb.c_parent, ba.c_parent);
+        handle_bullet_collsion(bb.c_parent.data, ba.c_parent.data);
       }
     });
   }
 
   update(){
+    this.random_asteroid_spawn();
 
     // Update game state 
     this.update_collision_bodies();
@@ -348,6 +337,24 @@ class MainScene extends Phaser.Scene {
     }
   }
 
+  random_asteroid_spawn() {
+    if(server.curr_number_of_asteroids > 10) return;
+
+    // Spawn an asteroid 
+    server.curr_number_of_asteroids++;
+
+    const asteroid_id = server.last_asteroid_id++;
+
+    state.asteroids[asteroid_id] = {
+      x: randomInt(0, 1400),
+      y: randomInt(0, 800),
+      velx: randomInt(-10, 10),
+      vely: randomInt(-10, 10),
+      body: null,
+      asteroid_id: asteroid_id,
+    };
+  }
+
 
   update_collision_bodies() {
     // Remove any dead collisions 
@@ -391,7 +398,12 @@ class MainScene extends Phaser.Scene {
     for (const [key, value] of Object.entries(state.asteroids)) {
       if(value.body != null) continue;
       
-      value.body = this.matter.bodies.rectangle(value.x, value.y, 21, 32);
+      value.body = this.matter.bodies.rectangle(value.x, value.y, 64, 64);
+      value.body.c_parent = {
+        type: "asteroid",
+        data: value
+      };
+
       this.matter.world.add(value.body);
       this.matter.body.setVelocity(value.body, {x: value.velx, y: value.vely});
     };
@@ -399,8 +411,18 @@ class MainScene extends Phaser.Scene {
 }
 
 
-const handle_bullet_collsion = (bullet, metorite) => {
-  console.log("collision");
+const handle_bullet_collsion = (bullet, asteroid) => {
+  console.log("Killed by: " + bullet.fired_from)
+  server.curr_number_of_asteroids--;
+
+  state.players[bullet.fired_from].score++;
+
+  // Remove both the asteroid and the bullet
+  removes.push(bullet.body);
+  removes.push(asteroid.body);
+
+  delete state.bullets[bullet.bullet_id];
+  delete state.asteroids[asteroid.asteroid_id];
 }
 
 // prepare the config for Phaser

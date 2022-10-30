@@ -51,6 +51,7 @@ scene.preload = () => {
   scene.load.image('player', 'assets/sprites/player.png');
   scene.load.image('enemy', 'assets/sprites/enemy.png');
   scene.load.image('bullet', 'assets/sprites/bullet.png');
+  scene.load.image('asteroid', 'assets/sprites/asteroid.png');
 
   // Init keys 
   scene.keys = {
@@ -122,7 +123,7 @@ scene.update = () => {
     asteroid.obj.x = asteroid.x
     asteroid.obj.y = asteroid.y
     if(asteroid.obj.texture.key === '__MISSING'){
-      asteroid.obj.setTexture('enemy');
+      asteroid.obj.setTexture('asteroid');
     }
   }
 
@@ -252,7 +253,7 @@ const update_asteroids = (new_state, server_state) => {
         return scene.state.asteroids[asteroid_id].obj;
       }
       
-      return scene.add.sprite(-50, -50, 'enemy');
+      return scene.add.sprite(-50, -50, 'asteroid');
     })(asteroid_id, server_state);
 
     new_state.asteroids[asteroid_id] = {
