@@ -110,6 +110,7 @@ const handle_player_connect = (data, socket) => {
     red: randomInt(0, 255),
     green: randomInt(0, 255),
     blue: randomInt(0, 255),
+
     coins: 0,
     difficulty: 1,
     color: Math.floor(Math.random()*16777215)
@@ -319,9 +320,6 @@ class MainScene extends Phaser.Scene {
         y: value.body.position.y,
         angle: a,
         username: value.username,
-        red: value.red,
-        green: value.green,
-        blue: value.blue,
         coins: value.coins,
         color: value.color
       };
