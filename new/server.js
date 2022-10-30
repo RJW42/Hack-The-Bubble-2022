@@ -163,13 +163,7 @@ global.phaserOnNodeFPS = FPS
 
 // MainScene
 class MainScene extends Phaser.Scene {
-  width = 0;
-  height = 0;
-
   create(){
-    const {w, h} = this.sys.game.canvas;
-    this.width = w;
-    this.height = h;
   }
 
   update(){
@@ -211,22 +205,32 @@ class MainScene extends Phaser.Scene {
   }
 
   update_player_positions(players) {
+    const width = this.sys.canvas.width;
+    const height = this.sys.canvas.height;
+
     for (const [key, value] of Object.entries(state.players)) {
-      var x, y;
+      const x = value.body.position.x;
+      const y = value.body.position.y;
+      const vx = value.body.velocity.x;
+      const vy = value.body.velocity.y;
 
-      x = value.body.position.x;
-      y = value.body.position.y;
-
-      console.log(x);
-      console.log(this.width);
-
-      if(x >= this.width - 10) {
-        x = 0;
+      // Move the players from on side to the other 
+      if(x >= width - 25 && vx > 0) {
+        this.matter.body.translate(value.body, {x: -x + 25, y: 0}); 
+      } else if(x < 25 && vx < 0) {
+        this.matter.body.translate(value.body, {x: width - 25, y: 0}); 
       }
-        
+
+      if(y >= height - 25 && vy > 0) {
+        this.matter.body.translate(value.body, {x: 0, y: -y + 25}); 
+      } else if(y < 25 && vy < 0) {
+        this.matter.body.translate(value.body, {x: 0, y: height - 25}); 
+      }
+       
+      // Update this player position for the client
       players[key] = {
-        x: x,
-        y: y,
+        x: value.body.position.x,
+        y: value.body.position.y,
         username: value.username
       };
     }

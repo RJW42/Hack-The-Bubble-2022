@@ -105,7 +105,7 @@ scene.update = () => {
 scene.draw_text = () => {
     switch(scene.state.game_state){
         case PLAYING:
-            scene.score_text.setText('Score: NONE');
+            scene.score_text.setText('Score: Nonce');
             break;
     }
 }
@@ -162,7 +162,7 @@ scene.state = {
     players: {}
 };
 
-var config = {
+const config = {
     type: Phaser.AUTO,
     width: 1400,
     height: 800,
@@ -174,5 +174,5 @@ var config = {
     backgroundColor: '#70a4c9',
 }
 
-var game = new Phaser.Game(config);
+const game = new Phaser.Game(config);
 
