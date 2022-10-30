@@ -52,11 +52,9 @@ func create_blockchain(difficulty int) Blockchain {
 	}
 }
 
-func (b *Blockchain) add_block(from, to string, amount float64) {
+func (b *Blockchain) add_block(ip string) string {
 	block_data := map[string]interface{}{
-		"from": from,
-		"to": to,
-		"amount": amount,
+		"ip": ip,
 	}
 	last_block := b.chain[len(b.chain)-1]
 	new_block := Block {
@@ -66,6 +64,7 @@ func (b *Blockchain) add_block(from, to string, amount float64) {
 	}
 	new_block.mine(b.difficulty)
 	b.chain = append(b.chain, new_block)
+	return new_block.hash
 }
 
 
@@ -81,17 +80,14 @@ func (b Blockchain) is_valid() bool {
 }
 
 func main() {
-	test := create_blockchain(5)
+	blockchain := create_blockchain(1)
 
-	test.add_block("Alice", "Bob", 5)
-	test.add_block("John", "Bob", 2)
-
-	fmt.Println(test.is_valid())
+	fmt.Println(blockchain.is_valid())
 
 	r := gin.Default()
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
-			"message": "hello",
+			"message": blockchain.add_block(c.ClientIP()),
 		})
 	})
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
