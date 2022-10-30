@@ -191,7 +191,9 @@ const update_players = (new_state, server_state) => {
       
       usernames_set = false;
 
-      return scene.add.rectangle(-50,-50,10,40,parseInt(server_state.players[player_id].color));
+      return scene.add
+      .rectangle(-50,-50,10,40,parseInt(server_state.players[player_id].color))
+      .setStrokeStyle(2, 0xffffff, 1);
     })(player_id, server_state);
 
     // Setting rotation
