@@ -11,6 +11,8 @@ require('@geckos.io/phaser-on-nodejs')
 const Phaser = require('phaser');
 const { stat } = require('fs');
 const { Body } = require('matter');
+const https = require('http');
+const Matter = require('matter');
 
 
 // Game Engine Code 
@@ -96,6 +98,9 @@ const handle_player_connect = (data, socket) => {
   socket.player = {
     x: randomInt(0, 1400),
     y: randomInt(0, 800),
+    angle: 0,
+    velArg: 0,
+    speed: 0,
     velx: 0,
     vely: 0,
     body: null,
@@ -103,8 +108,12 @@ const handle_player_connect = (data, socket) => {
     can_fire: true,
     red: randomInt(0, 255),
     green: randomInt(0, 255),
-    blue: randomInt(0, 255)
+    blue: randomInt(0, 255),
+    coins: 0,
+    color: Math.floor(Math.random()*16777215)
   };
+
+  console.log(socket.player.color);
 
   state.players[socket.id] = socket.player;
   connections[socket.id] = socket;
@@ -130,16 +139,30 @@ const handle_player_movement = (keys, socket) => {
 
   player.velx = 0;
   player.vely = 0;
-  augment =  0.001
+  player.speed = 0;
+  player.velArg = 0;
+  augment =  0.0005;
 
-  if(keys.right)
-    player.velx = augment;
-  if(keys.left)
-    player.velx = -augment;
-  if(keys.up)
-    player.vely = -augment;
-  if(keys.down)
-    player.vely = augment;
+  if(keys.right) {
+    player.velArg = 0.12;
+    // player.velx = augment;
+  }
+    
+    
+  if(keys.left) {
+    player.velArg = -0.12;
+    // player.velx = -augment;
+  }
+    
+  if(keys.up) {
+// player.vely = -augment;
+    player.speed = augment;
+  }
+    
+  if(keys.down) {
+// player.vely = augment;
+  }
+    
 
   if(!keys.space && !player.can_fire)
     player.can_fire = true;
@@ -150,20 +173,24 @@ const handle_player_movement = (keys, socket) => {
     const vx = player.body.velocity.x;
     const vy = player.body.velocity.y;
 
+    const angle = player.body.angle * Math.PI / 180;
+    const mag = Math.sqrt(vx ^ 2 + vy ^ 2);
+
     player.can_fire = false;
 
-    console.log("Bang!: " + vx + ", " + vy);
+    console.log("Bang!: " + vx + ", " + vy + ", " + angle);
     
     // Add a new bullet to the state
     state.bullets[server.last_bullet_id++] = {
-      x: player.body.position.x + vx * 5,
-      y: player.body.position.y + vy * 5,
-      velx: vx * 2,
-      vely: vy * 2,
+      x: player.body.position.x + (Math.cos(angle) * 40),
+      y: player.body.position.y + (Math.sin(angle) * 40),
+      velx: Math.cos(angle) * mag * 10,
+      vely: Math.sin(angle) * mag * 10,
       body: null,
       fired_from: socket.id
     };
 
+<<<<<<< HEAD
     state.asteroids[server.last_asteroid_id++] = {
       x: player.body.position.x + vx * 5,
       y: player.body.position.y + vy * 5,
@@ -176,6 +203,26 @@ const handle_player_movement = (keys, socket) => {
 
 
 
+=======
+    (async () => {
+      const response = await https.get('http://pc8-026-l:8080', (resp) => {
+        let data = '';
+      
+        // A chunk of data has been received.
+        resp.on('data', (chunk) => {
+          data += chunk;
+        });
+      
+        // The whole response has been received. Print out the result.
+        resp.on('end', () => {
+          console.log(JSON.parse(data));
+        });
+      
+      }).on("error", (err) => {
+        console.log("Error: " + err.message);
+      });
+    })();
+>>>>>>> 02e1d13d5cfd2e212395c33c8a9e7158e166661d
   }
   
 }
@@ -187,6 +234,15 @@ global.phaserOnNodeFPS = FPS
 // MainScene
 class MainScene extends Phaser.Scene {
   create(){
+    this.matter.world.on('collisionstart', (e, ba, bb) => {
+      if(ba.c_parent && ba.c_parent.type === "bullet" && 
+         bb.c_parent && bb.c_parent.type === "asteroid") {
+        handle_bullet_collsion(ba.c_parent, bb.c_parent);
+      } else if(bb.c_parent && bb.c_parent.type === "bullet" && 
+        ba.c_parent && ba.c_parent.type === "asteroid") {
+        handle_bullet_collsion(bb.c_parent, ba.c_parent);
+      }
+    });
   }
 
   update(){
@@ -222,6 +278,7 @@ class MainScene extends Phaser.Scene {
       const y = value.body.position.y;
       const vx = value.body.velocity.x;
       const vy = value.body.velocity.y;
+      const a = value.body.angle;
 
       // Move the players from on side to the other 
       if(x >= width - 25 && vx > 0) {
@@ -235,28 +292,50 @@ class MainScene extends Phaser.Scene {
       } else if(y < 25 && vy < 0) {
         this.matter.body.translate(value.body, {x: 0, y: height - 25}); 
       }
-       
+      
       // Update this player position for the client
       players[key] = {
         x: value.body.position.x,
         y: value.body.position.y,
+        angle: a,
         username: value.username,
         red: value.red,
         green: value.green,
         blue: value.blue,
+        coins: value.coins,
+        color: value.color
       };
     }
   }
 
 
   update_and_clone_bullet_data(bullets) {
+    const width = this.sys.canvas.width;
+    const height = this.sys.canvas.height;
+    const bullets_to_del = [];
+
     for (const [key, value] of Object.entries(state.bullets)) {     
+      // Check if shuold remove this bullet
+      const x = value.body.position.x;
+      const y = value.body.position.y;
+      const vx = value.body.velocity.x;
+      const vy = value.body.velocity.y;
+
+      if(x < 20 || y < 20 || x > width - 20 || y > height - 20 || 
+        (Math.abs(vx) < 0.5 && Math.abs(vy) < 0.5)) {
+        removes.push(value.body);
+        bullets_to_del.push(key);
+        continue;
+      }
+
       // Update this player position for the client
       bullets[key] = {
-        x: value.body.position.x,
-        y: value.body.position.y,
+        x: x, 
+        y: y
       };
     }
+
+    bullets_to_del.forEach(id => delete state.bullets[id]);
   }
 
 
@@ -287,14 +366,24 @@ class MainScene extends Phaser.Scene {
         value.body = this.matter.bodies.rectangle(value.x, value.y, 21, 32);
         this.matter.world.add(value.body);
       }
-      this.matter.body.applyForce(value.body, value.body.position, {x: value.velx, y: value.vely});
+      
+      this.matter.body.setAngle(value.body, (value.body.angle * Math.PI / 180.0) + value.velArg);
+      // console.log(value.body.angle, value.velArg);
+      this.matter.applyForceFromAngle(value.body, value.speed);
+      this.matter.body.setAngle(value.body, value.body.angle * 180 / Math.PI)
+      // this.matter.body.applyForce(value.body, value.body.position, {x: value.velx, y: value.vely});
     }
 
     // Update the bullet physics objects
     for (const [key, value] of Object.entries(state.bullets)) {
       if(value.body != null) continue;
       
-      value.body = this.matter.bodies.rectangle(value.x, value.y, 21, 32);
+      value.body = this.matter.bodies.rectangle(value.x, value.y, 16, 16);
+      value.body.c_parent = {
+        type: "bullet",
+        data: value
+      };
+      
       this.matter.world.add(value.body);
       this.matter.body.setVelocity(value.body, {x: value.velx, y: value.vely});
     };
@@ -308,6 +397,11 @@ class MainScene extends Phaser.Scene {
       this.matter.body.setVelocity(value.body, {x: value.velx, y: value.vely});
     };
   }
+}
+
+
+const handle_bullet_collsion = (bullet, metorite) => {
+
 }
 
 // prepare the config for Phaser
