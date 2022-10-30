@@ -37,124 +37,129 @@ server.last_player_id = 0;
 const PLAYING = 0; 
 
 
-// Main Server Code 
+// Game State  
 const state = {
     players: {
 
     },
     game_state: PLAYING,
-}
-const connections = {} // Todo: store what conn is what player maybe 
-const removes = []
+};
+const connections = {};
+const removes = [];
 
+
+// Connections Code 
 io.on('connection', (socket) => {
-    socket.on('connect_to_server_backend', (data) => {
-        if(data.password !== 'ligma'){
-            console.log('bad password');
-            socket.disconnect();
-            return;
-        }
-        console.log('good password to backend');
+  socket.on('connect_to_server_backend', (data) => {
+    if(data.password !== 'ligma'){
+      console.log('bad password');
+      socket.disconnect();
+      return;
+    }
+    
+    console.log('good password to backend');
 
-        socket.emit('connected');
+    socket.emit('connected');
+    // socket.on('start', () => {
+    //     console.log('starting game');
+    //     state.game_state = PLAYING
+    // });
 
-        // socket.on('start', () => {
-        //     console.log('starting game');
-        //     state.game_state = PLAYING
-        // });
+    // socket.on('reset', () => {
+    //     console.log('resetting game');
+    //     state.team_0_score = 0;
+    //     state.team_1_score = 0;
+    //     state.reset_ball = true;
+    // })
 
-        // socket.on('reset', () => {
-        //     console.log('resetting game');
-        //     state.team_0_score = 0;
-        //     state.team_1_score = 0;
-        //     state.reset_ball = true;
-        // })
-
-        // socket.on('purge', () => {
-        //     return;
-        //     /*
-        //     console.log('purging game');
-        //     state.players = {
-            
-        //         },
-        //     state.game_state = WAITING_FOR_PLAYERS;
-        //     state.time_left = 0;
-        //     state.team_0_score = 0;
-        //     state.team_1_score = 0;
-        //     state.team_0_count = 0;
-        //     state.team_1_count = 0;
-        //     state.reset_ball = true;
-            
-        //     for(const [id_, socket_] of Object.entries(connections)){
-        //         removes.push(socket_.player.body);
-        //         socket_.disconnect();
-        //     }
-
-        //     connections = {};
-        //     */
-        // })
-    });
-
-    socket.on('connect_to_server', (data) => {
-        // New Player Connected. The following code is specific to that player 
-        socket.id = server.last_player_id++;
-        console.log('new player: ', socket.id);
-
-        if(data.username.length > 10){
-            data.username = data.username.slice(0, 10);
-        }
+    // socket.on('purge', () => {
+    //     return;
+    //     /*
+    //     console.log('purging game');
+    //     state.players = {
         
-        socket.player = {
-            x: randomInt(0, 1400),
-            y: randomInt(0, 800),
-            velx: 0,
-            vely: 0,
-            body: null,
-            username: data.username
-        };
+    //         },
+    //     state.game_state = WAITING_FOR_PLAYERS;
+    //     state.time_left = 0;
+    //     state.team_0_score = 0;
+    //     state.team_1_score = 0;
+    //     state.team_0_count = 0;
+    //     state.team_1_count = 0;
+    //     state.reset_ball = true;
+        
+    //     for(const [id_, socket_] of Object.entries(connections)){
+    //         removes.push(socket_.player.body);
+    //         socket_.disconnect();
+    //     }
 
-        state.players[socket.id] = socket.player;
-        connections[socket.id] = socket;
+    //     connections = {};
+    //     */
+    // })
+  });
 
-        // Give Client Socket info 
-        socket.emit('init', {
-            id: socket.id
-        });
+  socket.on('connect_to_server', (data) => {
+    // New Player Connected. The following code is specific to that player 
+    socket.id = server.last_player_id++;
+    console.log('new player: ', socket.id);
 
-        // Get keyboard input 
-        socket.on('movement', (keys) => {
-            // Todo handle movement. 
-            // Keys is a list of key codes. Use uppoer for letters 
-            // Remember socket.id == player.id 
-            if(state.game_state != PLAYING)
-                return;
+    handle_player_connect(data, socket);
 
-            state.players[socket.id].velx = 0;
-            state.players[socket.id].vely = 0;
-            augment =  0.001
-
-            if(keys.right)
-                state.players[socket.id].velx = augment;
-            if(keys.left)
-                state.players[socket.id].velx = -augment;
-            if(keys.up)
-                state.players[socket.id].vely = -augment;
-            if(keys.down)
-                state.players[socket.id].vely = augment;
-        });
-
-        // Init logic to handle player disconnet 
-        socket.on('disconnect', () => {
-            // When a client disconects remove form the connections list 
-            //socket.player.body.destroy();
-            //if(!socket.player.spectating)
-            removes.push(socket.player.body);
-            //else
-            delete connections[socket.id];
-            delete state.players[socket.id];
-        });
-    });
+    // Give Client Socket info 
+    socket.emit('init', {id: socket.id});
+    socket.on('movement', (keys) => handle_player_movement(keys, socket));
+    socket.on('disconnect', () => handle_player_disconnnect(socket));
+  });
 });
+
+
+
+const handle_player_connect = (data, socket) => {
+  if(data.username.length > 10){
+    data.username = data.username.slice(0, 10);
+  }
+  
+  socket.player = {
+    x: randomInt(0, 1400),
+    y: randomInt(0, 800),
+    velx: 0,
+    vely: 0,
+    body: null,
+    username: data.username
+  };
+
+  state.players[socket.id] = socket.player;
+  connections[socket.id] = socket;
+}
+
+
+const handle_player_disconnnect = (socket) => {
+  // When a client disconects remove form the connections list 
+  removes.push(socket.player.body);
+  delete connections[socket.id];
+  delete state.players[socket.id];
+}
+
+
+const handle_player_movement = (keys, socket) => {
+  // Todo handle movement. 
+  // Keys is a list of key codes. Use uppoer for letters 
+  // Remember socket.id == player.id 
+  if(state.game_state != PLAYING)
+      return;
+
+  state.players[socket.id].velx = 0;
+  state.players[socket.id].vely = 0;
+  augment =  0.001
+
+  if(keys.right)
+      state.players[socket.id].velx = augment;
+  if(keys.left)
+      state.players[socket.id].velx = -augment;
+  if(keys.up)
+      state.players[socket.id].vely = -augment;
+  if(keys.down)
+      state.players[socket.id].vely = augment;
+}
 
 // Serverside Game Code 
 const FPS = 60
@@ -167,26 +172,10 @@ class MainScene extends Phaser.Scene {
 
   update(){
     // Update game state 
-    this.update_game_state();
+    this.update_collision_bodies();
 
-    // Remove any dead collisions 
-    //  This occours when a player disconects from the game 
-    removes.forEach(body => {
-      this.matter.world.remove(body);    
-    })
-    removes.length = 0;
-
-    // Give all players a collidable body 
-    for (const [key, value] of Object.entries(state.players)) {
-      if(value.body == null){
-        value.body = this.matter.bodies.rectangle(value.x, value.y, 21, 32);
-        this.matter.world.add(value.body);
-      }
-      this.matter.body.applyForce(value.body, value.body.position, {x: value.velx, y: value.vely});
-    }
-
-    // Updating the players positions
-    var send_state = {
+    // Init game state
+    const send_state = {
       players: {},
       game_state: state.game_state,
     };
@@ -199,9 +188,6 @@ class MainScene extends Phaser.Scene {
     );
   }
 
-  update_game_state() {
-    
-  }
 
   update_player_positions(players) {
     const width = this.sys.canvas.width;
@@ -225,8 +211,6 @@ class MainScene extends Phaser.Scene {
       } else if(y < 25 && vy < 0) {
         this.matter.body.translate(value.body, {x: 0, y: height - 25}); 
       }
-
-      console.log("hello");
        
       // Update this player position for the client
       players[key] = {
@@ -234,6 +218,27 @@ class MainScene extends Phaser.Scene {
         y: value.body.position.y,
         username: value.username
       };
+    }
+  }
+
+
+  update_collision_bodies() {
+    // Remove any dead collisions 
+    //  This occours when a player disconects from the game 
+    removes.forEach(body => {
+      this.matter.world.remove(body);    
+    })
+    removes.length = 0;
+
+    // Update the player physics objects  
+    for (const [key, value] of Object.entries(state.players)) {
+      if(value.body == null){
+        // Player does not have a collision body, give them one. 
+        //  This occours when a new player connects to the game 
+        value.body = this.matter.bodies.rectangle(value.x, value.y, 21, 32);
+        this.matter.world.add(value.body);
+      }
+      this.matter.body.applyForce(value.body, value.body.position, {x: value.velx, y: value.vely});
     }
   }
 }

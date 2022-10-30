@@ -61,7 +61,7 @@ scene.preload = () => {
     scene.goal_text = scene.add.text(0, 60, '', {
         fontSize: 60,
         color: 'black',
-    })
+    });
 }
 
 scene.create = () => {
