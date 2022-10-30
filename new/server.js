@@ -165,16 +165,19 @@ const handle_player_movement = (keys, socket) => {
     const vx = player.body.velocity.x;
     const vy = player.body.velocity.y;
 
+    const angle = player.body.angle * Math.PI / 180;
+    const mag = Math.sqrt(vx ^ 2 + vy ^ 2);
+
     player.can_fire = false;
 
-    console.log("Bang!: " + vx + ", " + vy);
+    console.log("Bang!: " + vx + ", " + vy + ", " + angle);
     
     // Add a new bullet to the state
     state.bullets[server.last_bullet_id++] = {
       x: player.body.position.x + vx * 5,
       y: player.body.position.y + vy * 5,
-      velx: vx * 2,
-      vely: vy * 2,
+      velx: Math.cos(angle) * mag * 10,
+      vely: Math.sin(angle) * mag * 10,
       body: null,
       fired_from: socket.id
     };
