@@ -160,7 +160,6 @@ const handle_player_movement = (keys, socket) => {
   if(keys.down) {
 // player.vely = augment;
   }
-    
 
   if(!keys.space && !player.can_fire)
     player.can_fire = true;
@@ -199,11 +198,11 @@ const handle_player_movement = (keys, socket) => {
       
         // The whole response has been received. Print out the result.
         resp.on('end', () => {
-          console.log(JSON.parse(data));
+          // console.log(JSON.parse(data));
         });
       
       }).on("error", (err) => {
-        console.log("Error: " + err.message);
+        // console.log("Error: " + err.message);
       });
     })();
   }
@@ -361,7 +360,7 @@ class MainScene extends Phaser.Scene {
 
 
 const handle_bullet_collsion = (bullet, metorite) => {
-
+  console.log("collision");
 }
 
 // prepare the config for Phaser
