@@ -12,6 +12,7 @@ const Phaser = require('phaser');
 const { stat } = require('fs');
 const { Body } = require('matter');
 
+
 // Game Engine Code 
 app.use('/css',express.static(__dirname + '/css'));
 app.use('/js',express.static(__dirname + '/js'));
@@ -25,28 +26,26 @@ app.get('/backend/',function(req,res){
     res.sendFile(__dirname+'/backend.html');
 });
 
-
 server.listen(42564,function(){ // Listens to port 8081
     console.log('Listening on '+server.address().port);
 });
 
 server.last_player_id = 0;
 
-const PLAYING = 0; //Symbol('Playing');
-const WAITING_FOR_PLAYERS = 1; //Symbol('Waiting');
-const COUNT_DOWN = 2; //Symbol('CountDown');
-const PLAYERS_PER_TEAM = 1;
+
+// Constants
+const PLAYING = 0; 
 
 
 // Main Server Code 
-var state = {
+const state = {
     players: {
 
     },
     game_state: PLAYING,
 }
-var connections = {} // Todo: store what conn is what player maybe 
-var removes = []
+const connections = {} // Todo: store what conn is what player maybe 
+const removes = []
 
 io.on('connection', (socket) => {
     socket.on('connect_to_server_backend', (data) => {
@@ -175,7 +174,7 @@ class MainScene extends Phaser.Scene {
     removes.forEach(body => {
       this.matter.world.remove(body);    
     })
-    removes = [];
+    removes.length = 0;
 
     // Give all players a collidable body 
     for (const [key, value] of Object.entries(state.players)) {
@@ -226,6 +225,8 @@ class MainScene extends Phaser.Scene {
       } else if(y < 25 && vy < 0) {
         this.matter.body.translate(value.body, {x: 0, y: height - 25}); 
       }
+
+      console.log("hello");
        
       // Update this player position for the client
       players[key] = {
