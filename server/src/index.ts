@@ -1,15 +1,15 @@
 import express from "express";
 import http from "http"
-import {Server} from "socket.io";
+import cors from "cors";
 
 const app = express();
 const port = 42069; // default port to listen
 
+app.use(cors);
+
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: '*'
-  }
+const io = require("socket.io")(server, {
+  cors: {origin: "*"}
 });
 
 io.on('connection', (socket: any) => {
