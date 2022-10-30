@@ -87,15 +87,24 @@ scene.update = () => {
   for(const [player_id, player] of Object.entries(scene.state.players)){
     player.obj.x = player.x
     player.obj.y = player.y
-    if(player.obj.texture.key === '__MISSING'){
-      if(player_id == scene.player_id){
-        player.obj.setTexture('player');
-      } else {
-        player.obj.setTexture('enemy');
-      }
-    }
-    // console.log("angle", player.angle);
-    player.obj.setAngle(player.angle + 90);
+    // if(player.obj.texture.key === '__MISSING'){
+    //   if(player_id == scene.player_id){
+    //     player.obj.setTexture('player');
+    //   } else {
+    //     player.obj.setTexture('enemy');
+    //   }
+    // }
+    // // console.log("angle", player.angle);
+    // player.obj.setAngle(player.angle + 90);
+    // if(player.obj.texture.key === '__MISSING'){
+    //   if(player_id == scene.player_id){
+    //     player.obj.setTexture('player');
+    //   } else {
+    //     player.obj.setTexture('enemy');
+    //   }
+    // }
+
+    // scene.add.circle(player.x, player.y, 10, 0xff1166);
   }
 
   //  Render bullets
@@ -165,12 +174,12 @@ const update_players = (new_state, server_state) => {
       }
       
       usernames_set = false;
-      if(player_id == scene.player_id){
-        return scene.add.sprite(-50, -50, 'player');
-      } else {
-        return scene.add.sprite(-50, -50, 'enemy');
-      }
+
+      return scene.add.rectangle(-50,-50,10,40,parseInt(server_state.players[player_id].color));
     })(player_id, server_state);
+
+    // Setting rotation
+    obj.setAngle(scene.state.players[player_id].angle + 90);
 
     new_state.players[player_id] = {
       x: server_state.players[player_id].x,
@@ -178,9 +187,7 @@ const update_players = (new_state, server_state) => {
       obj: obj,
       angle: server_state.players[player_id].angle,
       username: server_state.players[player_id].username,
-      red: server_state.players[player_id].red,
-      green: server_state.players[player_id].green,
-      blue: server_state.players[player_id].blue
+      color: server_state.players[player_id].color
     };
   }
 
