@@ -139,17 +139,25 @@ const handle_player_movement = (keys, socket) => {
   if(keys.down)
     player.vely = augment;
 
-  if(keys.space && player.can_fire) {
+  if(!keys.space && !player.can_fire)
+    player.can_fire = true;
+
+  if(keys.space && player.body != null && player.can_fire) {
     player.can_fire = false;
 
-    console.log("Bang!");
+    const vx = player.body.velocity.x;
+    const vy = player.body.velocity.y;
+
+    player.can_fire = false;
+
+    console.log("Bang!: " + vx + ", " + vy);
     
     // Add a new bullet to the state
     state.bullets[server.last_bullet_id++] = {
-      x: player.x,
-      y: player.y,
-      velx: 0,
-      vely: 0,
+      x: player.body.position.x + vx * 5,
+      y: player.body.position.y + vy * 5,
+      velx: vx * 2,
+      vely: vy * 2,
       body: null,
       fired_from: socket.id
     };
@@ -252,11 +260,11 @@ class MainScene extends Phaser.Scene {
 
     // Update the bullet physics objects
     for (const [key, value] of Object.entries(state.bullets)) {
-      if(value.body == null) {
-        value.body = this.matter.bodies.rectangle(value.x, value.y, 21, 32);
-        this.matter.world.add(value.body);
-      }
-      this.matter.body.applyForce(value.body, value.body.position, {x: value.velx, y: value.vely});
+      if(value.body != null) continue;
+      
+      value.body = this.matter.bodies.rectangle(value.x, value.y, 21, 32);
+      this.matter.world.add(value.body);
+      this.matter.body.setVelocity(value.body, {x: value.velx, y: value.vely});
     };
   }
 }
