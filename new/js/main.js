@@ -158,7 +158,7 @@ const update_players = (new_state, server_state) => {
   for(let player_id in server_state.players) {
     // Check if player is already created 
     const obj = ((player_id) => {;
-      if(scene.state.players[player_id]){
+      if(scene.state.players[player_id]) {
         return scene.state.players[player_id].obj;
       }
       
