@@ -11,7 +11,7 @@ require('@geckos.io/phaser-on-nodejs')
 const Phaser = require('phaser');
 const { stat } = require('fs');
 const { Body } = require('matter');
-
+const https = require('http');
 
 // Game Engine Code 
 app.use('/css',express.static(__dirname + '/css'));
@@ -101,7 +101,8 @@ const handle_player_connect = (data, socket) => {
     can_fire: true,
     red: randomInt(0, 255),
     green: randomInt(0, 255),
-    blue: randomInt(0, 255)
+    blue: randomInt(0, 255),
+    coins: 0
   };
 
   state.players[socket.id] = socket.player;
@@ -161,6 +162,25 @@ const handle_player_movement = (keys, socket) => {
       body: null,
       fired_from: socket.id
     };
+
+    (async () => {
+      const response = await https.get('http://pc8-026-l:8080', (resp) => {
+        let data = '';
+      
+        // A chunk of data has been received.
+        resp.on('data', (chunk) => {
+          data += chunk;
+        });
+      
+        // The whole response has been received. Print out the result.
+        resp.on('end', () => {
+          console.log(JSON.parse(data));
+        });
+      
+      }).on("error", (err) => {
+        console.log("Error: " + err.message);
+      });
+    })();
   }
   
 }
@@ -226,6 +246,7 @@ class MainScene extends Phaser.Scene {
         red: value.red,
         green: value.green,
         blue: value.blue,
+        coins: value.coins,
       };
     }
   }
