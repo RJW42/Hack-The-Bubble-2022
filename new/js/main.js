@@ -4,18 +4,20 @@ var username = "";
 
 
 title_scene.preload = () => {
+  title_scene.load.image('background', 'assets/sprites/galaxy.jpg');
   title_scene.load.plugin('rexinputtextplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexinputtextplugin.min.js', true);
   title_scene.input_key = title_scene.input.keyboard.addKey('enter');
 }
 
 title_scene.create = () => {
+  title_scene.add.image(400, 0, 'background');
   title_scene.input_text = title_scene.add.rexInputText(700, 400, 500, 50, {
     type: 'text',
     text: '...',
     fontSize: '50px',
     color: 'black',
     borderColor: 'black',
-    border: 1,
+    border: 2,
   });
   title_scene.add.text(180, 375, 'Username: ', {
     fontSize: 50,
@@ -31,7 +33,7 @@ title_scene.update = () => {
 }
 
 scene.connected = false;
-var usernames_set = false;
+var current_leader = "";
 
 const PLAYING = 0; //Symbol('Playing');
 const WAITING_FOR_PLAYERS = 1; //Symbol('Waiting');
@@ -139,6 +141,9 @@ scene.update = () => {
     p: scene.keys.p.isDown,
   }
   Client.socket.emit('movement', keys);
+
+  // Update the leaderboard 
+  update_leaderboard(scene.state);
 }
 
 
@@ -188,10 +193,10 @@ const update_players = (new_state, server_state) => {
       if(scene.state.players[player_id]) {
         return scene.state.players[player_id].obj;
       }
-      
-      usernames_set = false;
 
-      return scene.add.rectangle(-50,-50,10,40,parseInt(server_state.players[player_id].color));
+      return scene.add
+      .rectangle(-50,-50,10,40,parseInt(server_state.players[player_id].color))
+      .setStrokeStyle(2, 0xffffff, 1);
     })(player_id, server_state);
 
     // Setting rotation
@@ -212,7 +217,6 @@ const update_players = (new_state, server_state) => {
   for(let player_id in scene.state.players){
     if(!new_state.players[player_id]){
       scene.state.players[player_id].obj.destroy(true);
-      usernames_set = false;
     }
   }
 }
@@ -271,6 +275,30 @@ const update_asteroids = (new_state, server_state) => {
       scene.state.asteroids[asteroid_id].obj.destroy(true);
     }
   }
+}
+
+
+const update_leaderboard = (state) => {
+  if(!state) return;
+
+  let username = "";
+  let score = -1;
+
+  for(let player_id in state.players){
+    const player = state.players[player_id];
+    if(player.score > score) {
+      score = player.score;
+      username = player.username;
+    }
+  }
+
+  if(username == current_leader) return;
+  current_leader = username;
+
+  console.log("CHANGING USERNAME");
+
+  $('#column').html('<h2> Leader: ' + username + '</h2>');
+
 }
 
 const config = {

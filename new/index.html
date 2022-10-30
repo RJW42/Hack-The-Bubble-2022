@@ -1,15 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <style>
+        body {
+            background-color: #181a1b;
+            color: white;
+        }
+    </style>
     <meta charset="UTF-8">
     <script src="/socket.io/socket.io.js"></script>
     <script src="//cdn.jsdelivr.net/npm/phaser@3.51.0/dist/phaser.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <link rel="stylesheet" href="css/main.css">
-    <title>Basic multiplayer online game</title>
+    <title>SPACE!</title>
 </head>
 <body>
     <div class="container">
+        <div id="column" class="usernames"></div>
         <div id="game"></div>
     </div>
 </body>
