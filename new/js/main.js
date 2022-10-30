@@ -46,6 +46,7 @@ scene.state = {
 
 scene.preload = () => {
   // Load all assets 
+  scene.load.image('background', 'assets/sprites/galaxy.jpg');
   scene.load.image('player', 'assets/sprites/player.png');
   scene.load.image('enemy', 'assets/sprites/enemy.png');
   scene.load.image('bullet', 'assets/sprites/dead_body.png');
@@ -72,6 +73,7 @@ scene.preload = () => {
 
 scene.create = () => {
     console.log('Start');
+    scene.add.image(400, 0, 'background');
     Client.connect(username);
 }
 
