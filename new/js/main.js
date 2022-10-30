@@ -49,7 +49,7 @@ scene.preload = () => {
   scene.load.image('background', 'assets/sprites/galaxy.jpg');
   scene.load.image('player', 'assets/sprites/player.png');
   scene.load.image('enemy', 'assets/sprites/enemy.png');
-  scene.load.image('bullet', 'assets/sprites/dead_body.png');
+  scene.load.image('bullet', 'assets/sprites/bullet.png');
 
   // Init keys 
   scene.keys = {

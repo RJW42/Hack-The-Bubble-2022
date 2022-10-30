@@ -11,6 +11,8 @@ require('@geckos.io/phaser-on-nodejs')
 const Phaser = require('phaser');
 const { stat } = require('fs');
 const { Body } = require('matter');
+const https = require('http');
+const Matter = require('matter');
 
 
 // Game Engine Code 
@@ -102,6 +104,10 @@ const handle_player_connect = (data, socket) => {
     body: null,
     username: data.username,
     can_fire: true,
+    red: randomInt(0, 255),
+    green: randomInt(0, 255),
+    blue: randomInt(0, 255),
+    coins: 0,
     color: Math.floor(Math.random()*16777215)
   };
 
@@ -169,8 +175,11 @@ const handle_player_movement = (keys, socket) => {
     const mag = Math.sqrt(vx ^ 2 + vy ^ 2);
 
     player.can_fire = false;
+<<<<<<< HEAD
 
     console.log("Bang!: " + vx + ", " + vy + ", " + angle);
+=======
+>>>>>>> 64d10672f66f11d5bff7d54e6cb63bd2c44ee3c0
     
     // Add a new bullet to the state
     state.bullets[server.last_bullet_id++] = {
@@ -181,6 +190,25 @@ const handle_player_movement = (keys, socket) => {
       body: null,
       fired_from: socket.id
     };
+
+    (async () => {
+      const response = await https.get('http://pc8-026-l:8080', (resp) => {
+        let data = '';
+      
+        // A chunk of data has been received.
+        resp.on('data', (chunk) => {
+          data += chunk;
+        });
+      
+        // The whole response has been received. Print out the result.
+        resp.on('end', () => {
+          console.log(JSON.parse(data));
+        });
+      
+      }).on("error", (err) => {
+        console.log("Error: " + err.message);
+      });
+    })();
   }
   
 }
@@ -245,6 +273,10 @@ class MainScene extends Phaser.Scene {
         y: value.body.position.y,
         angle: a,
         username: value.username,
+        red: value.red,
+        green: value.green,
+        blue: value.blue,
+        coins: value.coins,
         color: value.color
       };
     }
@@ -252,13 +284,32 @@ class MainScene extends Phaser.Scene {
 
 
   update_and_clone_bullet_data(bullets) {
+    const width = this.sys.canvas.width;
+    const height = this.sys.canvas.height;
+    const bullets_to_del = [];
+
     for (const [key, value] of Object.entries(state.bullets)) {     
+      // Check if shuold remove this bullet
+      const x = value.body.position.x;
+      const y = value.body.position.y;
+      const vx = value.body.velocity.x;
+      const vy = value.body.velocity.y;
+
+      if(x < 20 || y < 20 || x > width - 20 || y > height - 20 || 
+        (Math.abs(vx) < 0.5 && Math.abs(vy) < 0.5)) {
+        removes.push(value.body);
+        bullets_to_del.push(key);
+        continue;
+      }
+
       // Update this player position for the client
       bullets[key] = {
-        x: value.body.position.x,
-        y: value.body.position.y,
+        x: x, 
+        y: y
       };
     }
+
+    bullets_to_del.forEach(id => delete state.bullets[id]);
   }
 
 
@@ -290,7 +341,8 @@ class MainScene extends Phaser.Scene {
     for (const [key, value] of Object.entries(state.bullets)) {
       if(value.body != null) continue;
       
-      value.body = this.matter.bodies.rectangle(value.x, value.y, 21, 32);
+      value.body = this.matter.bodies.rectangle(value.x, value.y, 16, 16);
+      
       this.matter.world.add(value.body);
       this.matter.body.setVelocity(value.body, {x: value.velx, y: value.vely});
     };
