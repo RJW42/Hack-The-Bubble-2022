@@ -31,6 +31,7 @@ server.listen(42564,function(){ // Listens to port 8081
 });
 
 server.last_player_id = 0;
+server.last_bullet_id = 0;
 
 
 // Constants
@@ -39,9 +40,8 @@ const PLAYING = 0;
 
 // Game State  
 const state = {
-    players: {
-
-    },
+    players: {},
+    bullets: {},
     game_state: PLAYING,
 };
 const connections = {};
@@ -97,7 +97,8 @@ const handle_player_connect = (data, socket) => {
     velx: 0,
     vely: 0,
     body: null,
-    username: data.username
+    username: data.username,
+    can_fire: true
   };
 
   state.players[socket.id] = socket.player;
@@ -120,18 +121,37 @@ const handle_player_movement = (keys, socket) => {
   if(state.game_state != PLAYING)
       return;
 
-  state.players[socket.id].velx = 0;
-  state.players[socket.id].vely = 0;
+  const player = state.players[socket.id];
+
+  player.velx = 0;
+  player.vely = 0;
   augment =  0.001
 
   if(keys.right)
-      state.players[socket.id].velx = augment;
+    player.velx = augment;
   if(keys.left)
-      state.players[socket.id].velx = -augment;
+    player.velx = -augment;
   if(keys.up)
-      state.players[socket.id].vely = -augment;
+    player.vely = -augment;
   if(keys.down)
-      state.players[socket.id].vely = augment;
+    player.vely = augment;
+
+  if(keys.space && player.can_fire) {
+    player.can_fire = false;
+
+    console.log("Bang!");
+    
+    // Add a new bullet to the state
+    state.bullets[server.last_bullet_id++] = {
+      x: player.x,
+      y: player.y,
+      velx: player.velx,
+      vely: player.vely,
+      body: null,
+      fired_from: socket.id
+    };
+  }
+  
 }
 
 // Serverside Game Code 
@@ -150,6 +170,7 @@ class MainScene extends Phaser.Scene {
     // Init game state
     const send_state = {
       players: {},
+      bullets: {},
       game_state: state.game_state,
     };
 
@@ -195,6 +216,11 @@ class MainScene extends Phaser.Scene {
   }
 
 
+  update_bullet_positions(bullets) {
+
+  }
+
+
   update_collision_bodies() {
     // Remove any dead collisions 
     //  This occours when a player disconects from the game 
@@ -213,6 +239,15 @@ class MainScene extends Phaser.Scene {
       }
       this.matter.body.applyForce(value.body, value.body.position, {x: value.velx, y: value.vely});
     }
+
+    // Update the bullet physics objects
+    for (const [key, value] of Object.entries(state.bullets)) {
+      if(value.body == null) {
+        value.body = this.matter.bodies.rectangle(value.x, value.y, 21, 32);
+        this.matter.world.add(value.body);
+      }
+      this.matter.body.applyForce(value.body, value.body.position, {x: value.velx, y: value.vely});
+    };
   }
 }
 

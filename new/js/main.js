@@ -31,22 +31,26 @@ title_scene.update = () => {
 }
 
 scene.connected = false;
+var usernames_set = false;
 
 const PLAYING = 0; //Symbol('Playing');
 const WAITING_FOR_PLAYERS = 1; //Symbol('Waiting');
 const COUNT_DOWN = 2; //Symbol('CountDown');
 const SPECTATING = 3;
 
-var usernames_set = false;
+scene.state = {
+  id: 0,
+  players: {},
+  bullets: {}
+};
 
 scene.preload = () => {
   // Load all assets 
   scene.load.image('player', 'assets/sprites/player.png');
-  scene.load.image('team', 'assets/sprites/team.png');
   scene.load.image('enemy', 'assets/sprites/enemy.png');
-  scene.load.image('dead_body', 'assets/sprites/dead_body.png');
-  scene.load.image('enemy_goal', 'assets/sprites/enemy_goal.png');
-  scene.load.image('player_goal', 'assets/sprites/player_goal.png');
+  scene.load.image('bullet', 'assets/sprites/dead_body.png');
+
+  // Init keys 
   scene.keys = {
     up: scene.input.keyboard.addKey('W'),
     down: scene.input.keyboard.addKey('S'),
@@ -54,6 +58,8 @@ scene.preload = () => {
     right: scene.input.keyboard.addKey('D'),
     space: scene.input.keyboard.addKey('space'),
   }
+
+  // Init text
   scene.score_text = scene.add.text(0, 0, 'Waiting For Players', {
     fontSize: 60,
     color: 'black',
@@ -74,7 +80,7 @@ scene.update = () => {
   if(scene.state == null)
     return;
 
-  // State set render the state 
+  // Render the game state 
   for(const [player_id, player] of Object.entries(scene.state.players)){
     player.obj.x = player.x
     player.obj.y = player.y
@@ -86,7 +92,6 @@ scene.update = () => {
       }
     }
   }
-
 
   // Draw Text
   scene.draw_text();
@@ -102,6 +107,7 @@ scene.update = () => {
   Client.socket.emit('movement', keys);
 }
 
+
 scene.draw_text = () => {
   switch(scene.state.game_state){
   case PLAYING:
@@ -112,62 +118,100 @@ scene.draw_text = () => {
 
 scene.update_state = (server_state) => {
   console.log("UPDATE_STATE: " + server_state);
-  if(!scene.loaded)
-    return;
+
+  if(!scene.loaded) return;
 
   // Convert the state to client side 
   let new_state = {
     id: 0,
     players: {},
+    bullets: {},
     game_state: server_state.game_state,
   }
 
-  for(var player_id in server_state.players) {
-    // Check if player is already created 
-    var obj;
 
-    if(scene.state.players[player_id]){
-      obj = scene.state.players[player_id].obj;
-    } else {
+  // Update the client side players 
+  update_players(new_state, server_state);
+
+  // Update the client side bullets 
+  update_bullets(new_state, server_state);
+
+  // Update the state 
+  scene.state = new_state;
+}
+
+
+const update_players = (new_state, server_state) => {
+  // Get all players in the server state
+  for(let player_id in server_state.players) {
+    // Check if player is already created 
+    const obj = ((player_id) => {;
+      if(scene.state.players[player_id]){
+        return scene.state.players[player_id].obj;
+      }
+      
       usernames_set = false;
       if(player_id == scene.player_id){
-          obj = scene.add.sprite(-50, -50, 'player');
+        return scene.add.sprite(-50, -50, 'player');
       } else {
-          obj = scene.add.sprite(-50, -50, 'enemy');
+        return scene.add.sprite(-50, -50, 'enemy');
       }
-    }
+    })(player_id, server_state);
 
     new_state.players[player_id] = {
       x: server_state.players[player_id].x,
       y: server_state.players[player_id].y,
       obj: obj,
       username: server_state.players[player_id].username
-    }
+    };
   }
 
   // Check for deleted players 
-  for(var player_id in scene.state.players){
+  for(let player_id in scene.state.players){
     if(!new_state.players[player_id]){
       scene.state.players[player_id].obj.destroy(true);
       usernames_set = false;
     }
   }
-
-  // Update the state 
-  scene.state = new_state;
 }
 
-scene.state = {
-    id: 0,
-    players: {}
-};
+
+const update_bullets = (new_state, server_state) => {
+  console.log(server_state);
+
+  // Get all bullets in the server state
+  for(let bullet_id in server_state.bullets) {
+    // Check if bullet is already created 
+    const obj = ((bullet_id) => {;
+      if(scene.state.bullets[bullet_id]){
+        return scene.state.bullets[bullet_id].obj;
+      }
+      
+      return scene.add.sprite(-50, -50, 'enemy')
+    })(bullet_id, server_state);
+
+    new_state.bullets[bullet_id] = {
+      x: server_state.bullets[bullet_id].x,
+      y: server_state.bullets[bullet_id].y,
+      obj: obj,
+    };
+  }
+
+  // Check for deleted bullets 
+  for(let bullet_id in scene.state.bullets){
+    if(!new_state.bullets[bullet_id]){
+      scene.state.bullets[bullet_id].obj.destroy(true);
+    }
+  }
+}
+
 
 const config = {
   type: Phaser.AUTO,
   width: 1400,
   height: 800,
   dom: {
-      createContainer: true
+    createContainer: true
   },        
   scene: [title_scene, scene],
   parent: 'game',
