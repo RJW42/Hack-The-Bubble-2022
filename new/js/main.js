@@ -41,7 +41,8 @@ const SPECTATING = 3;
 scene.state = {
   id: 0,
   players: {},
-  bullets: {}
+  bullets: {},
+  asteroids: {}
 };
 
 scene.preload = () => {
@@ -116,6 +117,15 @@ scene.update = () => {
     }
   }
 
+  //  Render asteroids
+  for(const [asteroid_id, asteroid] of Object.entries(scene.state.asteroids)){
+    asteroid.obj.x = asteroid.x
+    asteroid.obj.y = asteroid.y
+    if(asteroid.obj.texture.key === '__MISSING'){
+      asteroid.obj.setTexture('enemy');
+    }
+  }
+
   // Draw Text
   scene.draw_text();
 
@@ -149,6 +159,7 @@ scene.update_state = (server_state) => {
     id: 0,
     players: {},
     bullets: {},
+    asteroids: {},
     game_state: server_state.game_state,
   }
 
@@ -158,6 +169,9 @@ scene.update_state = (server_state) => {
 
   // Update the client side bullets 
   update_bullets(new_state, server_state);
+
+  // Update the client side asteroids
+  update_asteroids(new_state, server_state);
 
   // Update the state 
   scene.state = new_state;
@@ -228,6 +242,33 @@ const update_bullets = (new_state, server_state) => {
   }
 }
 
+
+const update_asteroids = (new_state, server_state) => {
+    // Get all asteroids in the server state
+  for(let asteroid_id in server_state.asteroids) {
+    // Check if asteroid is already created 
+    const obj = ((asteroid_id) => {;
+      if(scene.state.asteroids[asteroid_id]){
+        return scene.state.asteroids[asteroid_id].obj;
+      }
+      
+      return scene.add.sprite(-50, -50, 'enemy');
+    })(asteroid_id, server_state);
+
+    new_state.asteroids[asteroid_id] = {
+      x: server_state.asteroids[asteroid_id].x,
+      y: server_state.asteroids[asteroid_id].y,
+      obj: obj,
+    };
+  }
+
+  // Check for deleted asteroids 
+  for(let asteroid_id in scene.state.asteroids){
+    if(!new_state.asteroids[asteroid_id]){
+      scene.state.asteroids[asteroid_id].obj.destroy(true);
+    }
+  }
+}
 
 const config = {
   type: Phaser.AUTO,

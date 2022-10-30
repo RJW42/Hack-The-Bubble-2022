@@ -34,6 +34,7 @@ server.listen(42564,function(){ // Listens to port 8081
 
 server.last_player_id = 0;
 server.last_bullet_id = 0;
+server.last_asteroid_id = 0;
 
 
 // Constants
@@ -44,6 +45,7 @@ const PLAYING = 0;
 const state = {
     players: {},
     bullets: {},
+    asteroids: {},
     game_state: PLAYING,
 };
 const connections = {};
@@ -187,6 +189,20 @@ const handle_player_movement = (keys, socket) => {
       fired_from: socket.id
     };
 
+<<<<<<< HEAD
+    state.asteroids[server.last_asteroid_id++] = {
+      x: player.body.position.x + vx * 5,
+      y: player.body.position.y + vy * 5,
+      velx: vx * 2,
+      vely: vy * 2,
+      body: null,
+      fired_from: socket.id
+    };
+
+
+
+
+=======
     (async () => {
       const response = await https.get('http://pc8-026-l:8080', (resp) => {
         let data = '';
@@ -205,6 +221,7 @@ const handle_player_movement = (keys, socket) => {
         // console.log("Error: " + err.message);
       });
     })();
+>>>>>>> 02e1d13d5cfd2e212395c33c8a9e7158e166661d
   }
   
 }
@@ -228,6 +245,7 @@ class MainScene extends Phaser.Scene {
   }
 
   update(){
+
     // Update game state 
     this.update_collision_bodies();
 
@@ -235,11 +253,13 @@ class MainScene extends Phaser.Scene {
     const send_state = {
       players: {},
       bullets: {},
+      asteroids: {},
       game_state: state.game_state,
     };
 
     this.update_and_clone_player_data(send_state.players);
     this.update_and_clone_bullet_data(send_state.bullets);
+    this.update_and_clone_asteroid_data(send_state.asteroids);
     
     // Send the new state to all the players 
     io.emit('update', 
@@ -318,6 +338,17 @@ class MainScene extends Phaser.Scene {
   }
 
 
+  update_and_clone_asteroid_data(asteroids) {
+    for (const [key, value] of Object.entries(state.asteroids)) {     
+      // Update this player position for the client
+      asteroids[key] = {
+        x: value.body.position.x,
+        y: value.body.position.y,
+      };
+    }
+  }
+
+
   update_collision_bodies() {
     // Remove any dead collisions 
     //  This occours when a player disconects from the game 
@@ -352,6 +383,15 @@ class MainScene extends Phaser.Scene {
         data: value
       };
       
+      this.matter.world.add(value.body);
+      this.matter.body.setVelocity(value.body, {x: value.velx, y: value.vely});
+    };
+
+    // Update the bullet physics objects
+    for (const [key, value] of Object.entries(state.asteroids)) {
+      if(value.body != null) continue;
+      
+      value.body = this.matter.bodies.rectangle(value.x, value.y, 21, 32);
       this.matter.world.add(value.body);
       this.matter.body.setVelocity(value.body, {x: value.velx, y: value.vely});
     };
