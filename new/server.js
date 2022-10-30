@@ -151,7 +151,8 @@ const handle_player_movement = (keys, socket) => {
 
 
   // spend coins!
-  if(keys.return) {
+  if(keys.p) {
+    console.log(player.difficulty)
     if (player.difficulty <= 2 || player.coins < 10) return;
     player.difficulty--;
     player.can_fire = false;

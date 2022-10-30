@@ -58,6 +58,7 @@ scene.preload = () => {
     left: scene.input.keyboard.addKey('A'),
     right: scene.input.keyboard.addKey('D'),
     space: scene.input.keyboard.addKey('space'),
+    p: scene.input.keyboard.addKey('P'),
   }
 }
 
@@ -115,6 +116,7 @@ scene.update = () => {
     left: scene.keys.left.isDown,
     right: scene.keys.right.isDown,
     space: scene.keys.space.isDown,
+    p: scene.keys.p.isDown,
   }
   Client.socket.emit('movement', keys);
 }
