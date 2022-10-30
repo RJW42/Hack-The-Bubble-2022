@@ -11,7 +11,7 @@ const port = 42069; // default port to listen
 const server = http_1.default.createServer(app);
 const io = new socket_io_1.Server(server, {
     cors: {
-        origin: false
+        origin: '*'
     }
 });
 io.on('connection', (socket) => {
