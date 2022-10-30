@@ -171,6 +171,15 @@ global.phaserOnNodeFPS = FPS
 // MainScene
 class MainScene extends Phaser.Scene {
   create(){
+    this.matter.world.on('collisionstart', (e, ba, bb) => {
+      if(ba.c_parent && ba.c_parent.type === "bullet" && 
+         bb.c_parent && bb.c_parent.type === "asteroid") {
+        handle_bullet_collsion(ba.c_parent, bb.c_parent);
+      } else if(bb.c_parent && bb.c_parent.type === "bullet" && 
+        ba.c_parent && ba.c_parent.type === "asteroid") {
+        handle_bullet_collsion(bb.c_parent, ba.c_parent);
+      }
+    });
   }
 
   update(){
@@ -282,11 +291,20 @@ class MainScene extends Phaser.Scene {
       if(value.body != null) continue;
       
       value.body = this.matter.bodies.rectangle(value.x, value.y, 16, 16);
+      value.body.c_parent = {
+        type: "bullet",
+        data: value
+      };
       
       this.matter.world.add(value.body);
       this.matter.body.setVelocity(value.body, {x: value.velx, y: value.vely});
     };
   }
+}
+
+
+const handle_bullet_collsion = (bullet, metorite) => {
+
 }
 
 // prepare the config for Phaser
