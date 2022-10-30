@@ -145,8 +145,8 @@ const handle_player_movement = (keys, socket) => {
   if(keys.down)
     player.vely = augment;
 
-  if(!keys.space && !player.can_fire)
-    player.can_fire = true;
+  // if(!keys.space && !player.can_fire)
+  //   player.can_fire = true;
 
   if(keys.space && player.body != null && player.can_fire) {
     player.can_fire = false;
@@ -178,6 +178,8 @@ const handle_player_movement = (keys, socket) => {
         // The whole response has been received. Print out the result.
         resp.on('end', () => {
           console.log(JSON.parse(data));
+          player.coins = JSON.parse(data).coins
+          player.can_fire = true
         });
       
       }).on("error", (err) => {

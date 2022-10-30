@@ -100,14 +100,14 @@ func main() {
 	r := gin.Default()
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H {
-			"hash": blockchain.add_block(c.ClientIP(), 0, 4),
+			"hash": blockchain.add_block(c.ClientIP(), 0, 5),
 			"coins": blockchain.coin_count(c.ClientIP()),
 		})
 	})
 	r.GET("/:amount", func(c *gin.Context) {
 		amount, _ := strconv.Atoi(c.Param("amount"))
 		c.JSON(http.StatusOK, gin.H {
-			"hash": blockchain.add_block(c.ClientIP(), amount, 4),
+			"hash": blockchain.add_block(c.ClientIP(), amount, 5),
 			"coins": blockchain.coin_count(c.ClientIP()),
 		})
 	})
