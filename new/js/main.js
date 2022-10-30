@@ -179,7 +179,7 @@ const update_players = (new_state, server_state) => {
     })(player_id, server_state);
 
     // Setting rotation
-    obj.setAngle(scene.state.players[player_id].angle + 90);
+    obj.setAngle(server_state.players[player_id].angle + 90);
 
     new_state.players[player_id] = {
       x: server_state.players[player_id].x,

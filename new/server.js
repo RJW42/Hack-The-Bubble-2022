@@ -180,8 +180,8 @@ const handle_player_movement = (keys, socket) => {
     
     // Add a new bullet to the state
     state.bullets[server.last_bullet_id++] = {
-      x: player.body.position.x + vx * 5,
-      y: player.body.position.y + vy * 5,
+      x: player.body.position.x + (Math.cos(angle) * 40),
+      y: player.body.position.y + (Math.sin(angle) * 40),
       velx: Math.cos(angle) * mag * 10,
       vely: Math.sin(angle) * mag * 10,
       body: null,
