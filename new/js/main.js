@@ -46,6 +46,7 @@ scene.state = {
 
 scene.preload = () => {
   // Load all assets 
+  scene.load.image('background', 'assets/sprites/galaxy.jpg');
   scene.load.image('player', 'assets/sprites/player.png');
   scene.load.image('enemy', 'assets/sprites/enemy.png');
   scene.load.image('bullet', 'assets/sprites/dead_body.png');
@@ -72,6 +73,7 @@ scene.preload = () => {
 
 scene.create = () => {
     console.log('Start');
+    scene.add.image(400, 0, 'background');
     Client.connect(username);
 }
 
@@ -158,7 +160,7 @@ const update_players = (new_state, server_state) => {
   for(let player_id in server_state.players) {
     // Check if player is already created 
     const obj = ((player_id) => {;
-      if(scene.state.players[player_id]){
+      if(scene.state.players[player_id]) {
         return scene.state.players[player_id].obj;
       }
       
@@ -175,7 +177,10 @@ const update_players = (new_state, server_state) => {
       y: server_state.players[player_id].y,
       obj: obj,
       angle: server_state.players[player_id].angle,
-      username: server_state.players[player_id].username
+      username: server_state.players[player_id].username,
+      red: server_state.players[player_id].red,
+      green: server_state.players[player_id].green,
+      blue: server_state.players[player_id].blue
     };
   }
 

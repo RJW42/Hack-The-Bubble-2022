@@ -50,9 +50,10 @@ func create_blockchain() Blockchain {
 	}
 }
 
-func (b *Blockchain) add_block(ip string, difficulty int) string {
+func (b *Blockchain) add_block(ip string, amount int, difficulty int) string {
 	block_data := map[string]interface{}{
 		"ip": ip,
+		"spending": amount,
 	}
 	last_block := b.chain[len(b.chain)-1]
 	new_block := Block {
@@ -77,6 +78,20 @@ func (b Blockchain) is_valid() bool {
 	return true
 }
 
+func (b Blockchain) coin_count(ip string) int {
+	res := 0
+	for i := range b.chain[:] {
+		if b.chain[i].data["ip"] == ip {
+			if b.chain[i].data["spending"].(int) == 0 {
+				res++
+			} else {
+				res -= b.chain[i].data["spending"].(int)
+			}
+		}
+	}
+	return res
+}
+
 func main() {
 	blockchain := create_blockchain()
 
@@ -84,9 +99,18 @@ func main() {
 
 	r := gin.Default()
 	r.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": blockchain.add_block(c.ClientIP(), 4),
+		c.JSON(http.StatusOK, gin.H {
+			"hash": blockchain.add_block(c.ClientIP(), 0, 4),
+			"coins": blockchain.coin_count(c.ClientIP()),
 		})
 	})
+	r.GET("/:amount", func(c *gin.Context) {
+		amount, _ := strconv.Atoi(c.Param("amount"))
+		c.JSON(http.StatusOK, gin.H {
+			"hash": blockchain.add_block(c.ClientIP(), amount, 4),
+			"coins": blockchain.coin_count(c.ClientIP()),
+		})
+	})
+	
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }
