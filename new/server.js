@@ -180,8 +180,10 @@ const handle_player_movement = (keys, socket) => {
 
     console.log("Bang!: " + mag + ", " + angle);
     
+    const bullet_id = server.last_bullet_id++;
+
     // Add a new bullet to the state
-    state.bullets[server.last_bullet_id++] = {
+    state.bullets[bullet_id] = {
       x: player.body.position.x + (Math.cos(angle) * 30),
       y: player.body.position.y + (Math.sin(angle) * 30),
       velx : Math.cos(angle) * Math.max(Math.min(mag, 6), 1) * (5),
