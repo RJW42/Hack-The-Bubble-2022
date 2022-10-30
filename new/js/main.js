@@ -150,8 +150,8 @@ scene.update = () => {
 scene.draw_text = () => {
   switch(scene.state.game_state){
   case PLAYING:
-    for(const [player_id, player] of Object.entries(scene.state.players))
-      scene.score_text.setText('SpaceCoins: ' + player.coins.toString());
+    if(scene.state.players[scene.player_id])
+      scene.score_text.setText('SpaceCoins: ' + scene.state.players[scene.player_id].coins.toString());
     break;
   }
 }
